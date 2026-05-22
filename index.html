@@ -1,0 +1,2008 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>1260 Richards — A Yaletown Townhouse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      screens: { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' },
+      extend: {
+        fontFamily: {
+          serif: ['"Cormorant Garamond"', '"Times New Roman"', 'serif'],
+          sans: ['"Inter Tight"', '-apple-system', '"Helvetica Neue"', 'sans-serif'],
+        },
+      },
+    },
+    corePlugins: { preflight: false },
+  };
+</script>
+<style>
+  :root {
+    --ink: #1A1714;
+    --ink-2: #3A332D;
+    --ink-3: #6B6157;
+    --paper: #F4F0E8;
+    --paper-2: #EAE4D8;
+    --paper-3: #DED6C5;
+    --line: rgba(26,23,20,0.16);
+    --line-soft: rgba(26,23,20,0.08);
+    --accent: oklch(0.62 0.07 50);
+    --accent-deep: oklch(0.48 0.07 45);
+    --serif: "Cormorant Garamond", "Times New Roman", serif;
+    --sans: "Inter Tight", -apple-system, "Helvetica Neue", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
+  body { font-family: var(--sans); font-weight: 400; -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.55; }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+  ::selection { background: var(--ink); color: var(--paper); }
+  .container { max-width: 1440px; margin: 0 auto; padding: 0 48px; }
+  .container-narrow { max-width: 980px; margin: 0 auto; padding: 0 48px; }
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .display {
+    font-family: var(--serif);
+    font-weight: 300;
+    letter-spacing: -0.012em;
+    line-height: 1.04;
+  }
+  .display em { font-style: italic; font-weight: 300; color: var(--accent-deep); }
+  .rule { height: 1px; background: var(--line); border: 0; margin: 0; }
+  .rule-soft { height: 1px; background: var(--line-soft); border: 0; }
+  button { font-family: inherit; cursor: pointer; }
+  @media print {
+    nav, .gallery-actions, .inquire-form, .float-btn, .tweaks-fab { display: none !important; }
+  }
+  @media (max-width: 900px) {
+    .container, .container-narrow { padding: 0 24px; }
+  }
+  #root:empty::before {
+    content: "1260";
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    font-family: var(--serif); font-size: 88px; color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+
+  /* Gallery responsive grid: 1 col on mobile, 12 col on tablet+ */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .gallery-grid .gallery-tile {
+    grid-column: 1 / -1 !important;
+    aspect-ratio: 4 / 3 !important;
+  }
+  @media (min-width: 768px) {
+    .gallery-grid { grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .gallery-grid .gallery-tile {
+      grid-column: span var(--md-span, 6) !important;
+      aspect-ratio: var(--md-ratio, 4 / 3) !important;
+    }
+  }
+
+  /* Hide native scrollbar on chip rail */
+  .gallery-actions::-webkit-scrollbar { display: none; }
+  .gallery-actions { scrollbar-width: none; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+  <script type="text/babel">
+
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "palette": ["#D97757", "#29261b", "#f6f4ef"],
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        options={['#D97757', '#2A6FDB', '#1F8A5B', '#7A5AE0']}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakColor  label="Palette" value={t.palette}
+//                        options={[['#D97757', '#29261b', '#f6f4ef'],
+//                                  ['#475569', '#0f172a', '#f1f5f9']]}
+//                        onChange={(v) => setTweak('palette', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;box-sizing:border-box;width:100%;min-width:0;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;
+    overflow-wrap:anywhere}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;box-sizing:border-box;min-width:0;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+
+  .twk-chips{display:flex;gap:6px}
+  .twk-chip{position:relative;appearance:none;flex:1;min-width:0;height:46px;
+    padding:0;border:0;border-radius:6px;overflow:hidden;cursor:default;
+    box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.06);
+    transition:transform .12s cubic-bezier(.3,.7,.4,1),box-shadow .12s}
+  .twk-chip:hover{transform:translateY(-1px);
+    box-shadow:0 0 0 .5px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.12)}
+  .twk-chip[data-on="1"]{box-shadow:0 0 0 1.5px rgba(0,0,0,.85),
+    0 2px 6px rgba(0,0,0,.15)}
+  .twk-chip>span{position:absolute;top:0;bottom:0;right:0;width:34%;
+    display:flex;flex-direction:column;box-shadow:-1px 0 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i{flex:1;box-shadow:0 -1px 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i:first-child{box-shadow:none}
+  .twk-chip svg{position:absolute;top:6px;left:6px;width:13px;height:13px;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  // Accepts either setTweak('key', value) or setTweak({ key: value, ... }) so a
+  // useState-style call doesn't write a "[object Object]" key into the persisted
+  // JSON block.
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+    // Same-window signal so in-page listeners (deck-stage rail thumbnails)
+    // can react — the parent message only reaches the host, not peers.
+    window.dispatchEvent(new CustomEvent('tweakchange', { detail: edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" data-omelette-chrome=""
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">
+          {children}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  // Segments wrap mid-word once per-segment width runs out. The track is
+  // ~248px (280 panel − 28 body pad − 4 seg pad), each button loses 12px
+  // to its own padding, and 11.5px system-ui averages ~6.3px/char — so 2
+  // options fit ~16 chars each, 3 fit ~10. Past that (or >3 options), fall
+  // back to a dropdown rather than wrap.
+  const labelLen = (o) => String(typeof o === 'object' ? o.label : o).length;
+  const maxLen = options.reduce((m, o) => Math.max(m, labelLen(o)), 0);
+  const fitsAsSegments = maxLen <= ({ 2: 16, 3: 10 }[options.length] ?? 0);
+  if (!fitsAsSegments) {
+    // <select> emits strings — map back to the original option value so the
+    // fallback stays type-preserving (numbers, booleans) like the segment path.
+    const resolve = (s) => {
+      const m = options.find((o) => String(typeof o === 'object' ? o.value : o) === s);
+      return m === undefined ? s : typeof m === 'object' ? m.value : m;
+    };
+    return <TweakSelect label={label} value={value} options={options}
+                        onChange={(s) => onChange(resolve(s))} />;
+  }
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+// Relative-luminance contrast pick — checkmarks drawn over a swatch need to
+// read on both #111 and #fafafa without per-option configuration. Hex input
+// only (#rgb / #rrggbb); named or rgb()/hsl() colors fall through to "light".
+function __twkIsLight(hex) {
+  const h = String(hex).replace('#', '');
+  const x = h.length === 3 ? h.replace(/./g, (c) => c + c) : h.padEnd(6, '0');
+  const n = parseInt(x.slice(0, 6), 16);
+  if (Number.isNaN(n)) return true;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return r * 299 + g * 587 + b * 114 > 148000;
+}
+
+const __TwkCheck = ({ light }) => (
+  <svg viewBox="0 0 14 14" aria-hidden="true">
+    <path d="M3 7.2 5.8 10 11 4.2" fill="none" strokeWidth="2.2"
+          strokeLinecap="round" strokeLinejoin="round"
+          stroke={light ? 'rgba(0,0,0,.78)' : '#fff'} />
+  </svg>
+);
+
+// TweakColor — curated color/palette picker. Each option is either a single
+// hex string or an array of 1-5 hex strings; the card adapts — a lone color
+// renders solid, a palette renders colors[0] as the hero (left ~2/3) with the
+// rest stacked in a sharp column on the right. onChange emits the
+// option in the shape it was passed (string stays string, array stays array).
+// Without options it falls back to the native color input for back-compat.
+function TweakColor({ label, value, options, onChange }) {
+  if (!options || !options.length) {
+    return (
+      <div className="twk-row twk-row-h">
+        <div className="twk-lbl"><span>{label}</span></div>
+        <input type="color" className="twk-swatch" value={value}
+               onChange={(e) => onChange(e.target.value)} />
+      </div>
+    );
+  }
+  // Native <input type=color> emits lowercase hex per the HTML spec, so
+  // compare case-insensitively. String() guards JSON.stringify(undefined),
+  // which returns the primitive undefined (no .toLowerCase).
+  const key = (o) => String(JSON.stringify(o)).toLowerCase();
+  const cur = key(value);
+  return (
+    <TweakRow label={label}>
+      <div className="twk-chips" role="radiogroup">
+        {options.map((o, i) => {
+          const colors = Array.isArray(o) ? o : [o];
+          const [hero, ...rest] = colors;
+          const sup = rest.slice(0, 4);
+          const on = key(o) === cur;
+          return (
+            <button key={i} type="button" className="twk-chip" role="radio"
+                    aria-checked={on} data-on={on ? '1' : '0'}
+                    aria-label={colors.join(', ')} title={colors.join(' · ')}
+                    style={{ background: hero }}
+                    onClick={() => onChange(o)}>
+              {sup.length > 0 && (
+                <span>
+                  {sup.map((c, j) => <i key={j} style={{ background: c }} />)}
+                </span>
+              )}
+              {on && <__TwkCheck light={__twkIsLight(hero)} />}
+            </button>
+          );
+        })}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+// Listing data — keep editable, plain JS so non-technical edits are easy.
+
+const LISTING = {
+  address: "1260 Richards Street",
+  city: "Vancouver, British Columbia",
+  postal: "V6B 3G2",
+  neighbourhood: "Yaletown",
+  building: "The Grace",
+  status: "Just Listed",
+  price: "$2,338,000",
+  pricePerSqft: "≈ $1,370 / sq.ft.",
+  beds: 2,
+  dens: 1,
+  baths: 2,
+  halfBaths: 1,
+  sqft: 1706,
+  outdoorSqft: 0,
+  parking: "Private 1-car garage (direct interior access), One spot in shared garage",
+  levels: 2,
+  ceilingFt: "19'",
+  yearBuilt: 2008,
+  taxes: "$5,940 / yr",
+  strata: "$986 / mo",
+  mlsNum: "R3126032",
+  agentName: "Nicola Campbell",
+  agentTitle: "Mint Home Team",
+  agentBrokerage: "Oakwyn Realty Ltd.",
+  agentPhone: "604 767 4600",
+  agentEmail: "Nicola@MintHomeTeam.com",
+};
+
+// Curated, captioned photo set. Captions are for the gallery and lightbox.
+const PHOTOS = [
+  { src: "photos/001.jpg", cat: "Exterior",  caption: "Private street-level entry at 1260 Richards" },
+  { src: "photos/009.jpg", cat: "Living",    caption: "Gas fireplace anchors a 19-foot living wall" },
+  { src: "photos/035.jpg", cat: "Living",    caption: "Gas fireplace anchors a 19-foot living wall" },
+  { src: "photos/007.jpg", cat: "Living",    caption: "Open-plan flow between dining and lounge" },
+  { src: "photos/010.jpg", cat: "Living",    caption: "Light-flooded living from south-facing windows" },
+  { src: "photos/012.jpg", cat: "Living",    caption: "Formal seating arrangement, hand-carved mantel" },
+  { src: "photos/013.jpg", cat: "Living",    caption: "Open-plan flow between dining and lounge" },
+  { src: "photos/015.jpg", cat: "Living",    caption: "Evening — fire lit, pendants on" },
+  { src: "photos/046.jpg", cat: "Living",    caption: "Storage Room and Wine Fridge" },
+  { src: "photos/052.jpg", cat: "Living",    caption: "Full Size Washer/Dryer" },
+  { src: "photos/017.jpg", cat: "Kitchen",   caption: "Chef's kitchen with central gas-range island" },
+  { src: "photos/018.jpg", cat: "Kitchen",   caption: "Cherry millwork and granite throughout" },
+  { src: "photos/019.jpg", cat: "Kitchen",   caption: "Sub-Zero refrigeration, integrated appliances" },
+  { src: "photos/020.jpg", cat: "Kitchen",   caption: "Bar seating for three" },
+  { src: "photos/024.jpg", cat: "Kitchen",   caption: "Prep galley with travertine backsplash" },
+  { src: "photos/036.jpg", cat: "Den",       caption: "Den / second living above the great room" },
+  { src: "photos/029.jpg", cat: "Den",       caption: "Mezzanine office with overlook" },
+  { src: "photos/040.jpg", cat: "Bedrooms",  caption: "Primary bedroom" },
+  { src: "photos/042.jpg", cat: "Bedrooms",  caption: "Primary bedroom" },
+  { src: "photos/039.jpg", cat: "Bedrooms",  caption: "Primary bedroom — Terrace" },
+  { src: "photos/040.jpg", cat: "Bedrooms",  caption: "Second bedroom suite with sliding glass" },
+  { src: "photos/048.jpg", cat: "Bedrooms",  caption: "Restful palette, generous proportions" },
+  { src: "photos/049.jpg", cat: "Bath",      caption: "Primary bath — freestanding clawfoot tub" },
+  { src: "photos/050.jpg", cat: "Bath",      caption: "Primary bath - Hand-held shower fixtures, marble tile" },
+  { src: "photos/051.jpg", cat: "Bath",      caption: "Primary bath - Walk-in glass shower" },
+  { src: "photos/052.jpg", cat: "Bath",      caption: "Second bath - Walk-in glass shower" },
+  { src: "photos/047.jpg", cat: "Bath",      caption: "Half bath" },
+  { src: "photos/002.jpg", cat: "Building/Amenities",  caption: "The Grace Tower" },
+  { src: "photos/037.jpg", cat: "Building/Amenities",  caption: "Gym" },
+  { src: "photos/061.jpg", cat: "Building/Amenities",  caption: "Indoor/Outdoor Pool and Hot tub" },
+  { src: "photos/058.jpg", cat: "Building/Amenities",   caption: "European style living" },
+  { src: "photos/059.jpg", cat: "Building/Amenities",   caption: "Gas fire-table for evenings on the city" },
+  { src: "photos/060.jpg", cat: "Building/Amenities",   caption: "A Terrace for gathering" },
+  { src: "photos/053.jpg", cat: "Garage",    caption: "Private interior-access garage — the rare detail" },
+  { src: "photos/055.jpg", cat: "Garage",    caption: "Step from the kitchen into your own bay" },
+  { src: "photos/057.jpg", cat: "Garage",    caption: "Secure, dedicated, fully enclosed" },
+  { src: "photos/002.jpg", cat: "Exterior",  caption: "Heritage-inspired stone & brick facade" },
+  { src: "photos/003.jpg", cat: "Exterior",  caption: "Wrought-iron garden detail" },
+  { src: "photos/004.jpg", cat: "Exterior",  caption: "Hedged street frontage" },
+  { src: "photos/005.jpg", cat: "Exterior",  caption: "Approach from Richards Street" },
+];
+
+const RARITY = [
+  {
+    n: "01",
+    title: "Your own front door.",
+    body: "Walk in from the street like a house in a city of towers. A separate ground-level entry, addressed and gated, with a hedged garden in front. In Yaletown, fewer than fifteen private street entries remain."
+  },
+  {
+    n: "02",
+    title: "A private interior-access garage.",
+    body: "Step from the kitchen, down a hall of your own, into a fully enclosed garage bay. No elevator. No fob. No shared aisle. For collectors of cars — or quiet — it is functionally irreplaceable."
+  },
+  {
+    n: "03",
+    title: "Nineteen feet of ceiling.",
+    body: "The great room rises a clear two stories, washed by twin south-facing windows. A floor plan that lives like a loft and presents like a townhouse — over 1,700 square feet across two levels."
+  },
+  {
+    n: "04",
+    title: "Footsteps from False Creek.",
+    body: "Enjoy an unbeatable lifestyle just steps from the seawall, waterfront parks, and Yaletown’s vibrant collection of acclaimed restaurants, cafés, and patios."
+  },
+];
+
+const HIGHLIGHTS = [
+  ["Bedrooms", "2 + den"],
+  ["Bathrooms", "2.5"],
+  ["Interior", "1,703 sq.ft."],
+  ["Private Garage", "288 sq.ft."],
+  ["Levels", "Two storeys"],
+  ["Ceilings", "Up to 19′ in the great room"],
+  ["Kitchen", "Sub-Zero, gas range, granite"],
+  ["Heating", "Gas fireplace + central HVAC"],
+  ["Parking", "Private 1-car garage, interior access. 1 spot in shared garage."],
+  ["Storage", "In-suite + private garage"],
+  ["Building", "The Grace, 2008"],
+  ["Pets / Rentals", "Both permitted"],
+];
+
+const AMENITIES = [
+  { name: "Fitness centre", note: "Fully equipped residents' gym" },
+  { name: "Indoor pool",    note: "Heated, year-round" },
+  { name: "Outdoor pool",   note: "Seasonal — summer months" },
+  { name: "Rooftop terrace",note: "Shared landscaped deck" },
+];
+
+const NEIGHBOURHOOD = [
+  { d: "0.2 km", p: "George Wainborn Park" },
+  { d: "0.3 km", p: "False Creek Seawall" },
+  { d: "0.4 km", p: "Provence Marinaside" },
+  { d: "0.5 km", p: "Yaletown–Roundhouse Station" },
+  { d: "0.6 km", p: "Roundhouse Community Centre" },
+  { d: "0.9 km", p: "Robson & Burrard shopping" },
+  { d: "1.1 km", p: "BC Place / Rogers Arena" },
+  { d: "1.6 km", p: "Granville Island (Aquabus)" },
+];
+
+window.LISTING = LISTING;
+window.PHOTOS = PHOTOS;
+window.RARITY = RARITY;
+window.HIGHLIGHTS = HIGHLIGHTS;
+window.AMENITIES = AMENITIES;
+window.NEIGHBOURHOOD = NEIGHBOURHOOD;
+// Gallery — filter chips + grid + lightbox
+
+const { useState, useEffect, useCallback, useMemo } = React;
+
+const galleryStyles = {
+  chip: (active) => ({
+    padding: "8px 14px",
+    borderRadius: 999,
+    border: "1px solid " + (active ? "var(--ink)" : "var(--line)"),
+    background: active ? "var(--ink)" : "transparent",
+    color: active ? "var(--paper)" : "var(--ink-2)",
+    fontSize: 12,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    fontWeight: 500,
+    transition: "all .2s ease",
+    whiteSpace: "nowrap",
+  }),
+  img: { width: "100%", height: "100%", objectFit: "cover", transition: "transform .9s ease" },
+  caption: {
+    position: "absolute", left: 16, bottom: 14,
+    color: "var(--paper)", fontSize: 12, letterSpacing: ".04em",
+    textShadow: "0 1px 12px rgba(0,0,0,.5)",
+    opacity: 0, transition: "opacity .3s ease",
+  },
+};
+
+function GalleryTile({ photo, span, ratio, onClick }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      className="gallery-tile"
+      style={{
+        "--md-span": span,
+        "--md-ratio": ratio,
+        overflow: "hidden",
+        background: "var(--paper-2)",
+        cursor: "zoom-in",
+        position: "relative",
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={onClick}
+    >
+      <img
+        src={photo.src}
+        alt={photo.caption}
+        loading="lazy"
+        decoding="async"
+        style={{ ...galleryStyles.img, transform: hover ? "scale(1.04)" : "scale(1)" }}
+      />
+      <div style={{ ...galleryStyles.caption, opacity: hover ? 1 : 0 }}>{photo.caption}</div>
+    </div>
+  );
+}
+
+// Layout pattern: pleasant editorial rhythm. Returns {span, ratio} per index.
+function tileSpec(i, total) {
+  // 12-col grid. Mix: 12, 6+6, 4+4+4, 8+4, 4+8
+  const patterns = [
+    [{s:12, r:"16/7"}],
+    [{s:7, r:"4/3"}, {s:5, r:"4/3"}],
+    [{s:4, r:"3/4"}, {s:4, r:"3/4"}, {s:4, r:"3/4"}],
+    [{s:5, r:"4/3"}, {s:7, r:"4/3"}],
+    [{s:6, r:"3/2"}, {s:6, r:"3/2"}],
+    [{s:8, r:"16/9"}, {s:4, r:"3/4"}],
+    [{s:4, r:"3/4"}, {s:8, r:"16/9"}],
+  ];
+  // Build a flat sequence; cycle through patterns
+  const flat = [];
+  let p = 0;
+  while (flat.length < total) {
+    const pat = patterns[p % patterns.length];
+    for (const t of pat) { if (flat.length < total) flat.push(t); }
+    p++;
+  }
+  return flat[i];
+}
+
+function Lightbox({ photos, index, onClose, onNav }) {
+  useEffect(() => {
+    function key(e) {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") onNav(1);
+      if (e.key === "ArrowLeft") onNav(-1);
+    }
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [onClose, onNav]);
+
+  if (index == null) return null;
+  const p = photos[index];
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(15,12,10,.96)",
+      zIndex: 200, display: "flex", flexDirection: "column",
+    }}>
+      <div
+        className="flex items-center justify-between px-4 py-4 md:px-7 md:py-5"
+        style={{ color: "var(--paper)", gap: 12 }}
+      >
+        <div className="hidden sm:block" style={{ fontFamily: "var(--serif)", fontSize: 22, fontStyle: "italic" }}>1260 Richards</div>
+        <div style={{ fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", opacity: .7 }}>
+          {String(index+1).padStart(2,'0')} / {String(photos.length).padStart(2,'0')}
+        </div>
+        <button onClick={onClose} style={{
+          background: "transparent", border: "1px solid rgba(244,240,232,.3)",
+          color: "var(--paper)", padding: "8px 14px", fontSize: 11,
+          letterSpacing: ".16em", textTransform: "uppercase",
+        }}>Close ✕</button>
+      </div>
+      <div className="flex-1 relative grid place-items-center px-4 md:px-20">
+        <img
+          src={p.src}
+          alt={p.caption}
+          loading="lazy"
+          decoding="async"
+          style={{ maxWidth: "100%", maxHeight: "75vh", objectFit: "contain", boxShadow: "0 30px 80px rgba(0,0,0,.5)" }}
+        />
+        <button onClick={() => onNav(-1)} className="lb-nav" style={lbNavStyle("left")}>‹</button>
+        <button onClick={() => onNav(1)} className="lb-nav" style={lbNavStyle("right")}>›</button>
+      </div>
+      <div
+        className="text-center px-6 pb-7 pt-4"
+        style={{ color: "rgba(244,240,232,.85)", fontFamily: "var(--serif)", fontStyle: "italic", fontSize: "clamp(15px, 2.5vw, 20px)" }}
+      >
+        {p.caption}
+        <div style={{ marginTop: 6, fontFamily: "var(--sans)", fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "rgba(244,240,232,.45)", fontStyle: "normal" }}>{p.cat}</div>
+      </div>
+    </div>
+  );
+}
+
+function lbNavStyle(side) {
+  return {
+    position: "absolute",
+    [side]: 8,
+    top: "50%", transform: "translateY(-50%)",
+    width: 44, height: 44, borderRadius: 999,
+    background: "rgba(0,0,0,.3)",
+    border: "1px solid rgba(244,240,232,.25)",
+    color: "var(--paper)",
+    fontSize: 26, lineHeight: 1,
+  };
+}
+
+function Gallery() {
+  const photos = window.PHOTOS;
+  const cats = useMemo(() => ["All", ...Array.from(new Set(photos.map(p => p.cat)))], [photos]);
+  const [filter, setFilter] = useState("All");
+  const [lbIndex, setLbIndex] = useState(null);
+  const [showAll, setShowAll] = useState(false);
+
+  const visible = useMemo(() => filter === "All" ? photos : photos.filter(p => p.cat === filter), [filter, photos]);
+  const displayed = showAll ? visible : visible.slice(0, 12);
+
+  return (
+    <section id="gallery" className="py-20 md:py-28 lg:py-36" style={{ borderTop: "1px solid var(--line-soft)" }}>
+      <div className="container">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 md:gap-8 mb-10 md:mb-12">
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 16 }}>The Tour · {photos.length} images</div>
+            <h2 className="display" style={{ fontSize: "clamp(40px, 6vw, 64px)", margin: 0 }}>Walk <em>through</em>.</h2>
+          </div>
+          <div
+            className="gallery-actions flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible -mx-6 px-6 md:mx-0 md:px-0"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            {cats.map(c => (
+              <button key={c} style={galleryStyles.chip(filter === c)} onClick={() => { setFilter(c); setShowAll(false); }}>{c}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="gallery-grid">
+          {displayed.map((p, i) => {
+            const spec = tileSpec(i, displayed.length);
+            const originalIndex = photos.indexOf(p);
+            return <GalleryTile key={p.src + i} photo={p} span={spec.s} ratio={spec.r} onClick={() => setLbIndex(originalIndex)} />;
+          })}
+        </div>
+
+        {visible.length > 12 && !showAll && (
+          <div style={{ textAlign: "center", marginTop: 48 }}>
+            <button onClick={() => setShowAll(true)} style={{
+              background: "transparent", border: "1px solid var(--ink)",
+              color: "var(--ink)", padding: "16px 32px",
+              fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", fontWeight: 500,
+            }}>View all {visible.length} ({filter})</button>
+          </div>
+        )}
+      </div>
+
+      <Lightbox
+        photos={photos}
+        index={lbIndex}
+        onClose={() => setLbIndex(null)}
+        onNav={(d) => setLbIndex((lbIndex + d + photos.length) % photos.length)}
+      />
+    </section>
+  );
+}
+
+Object.assign(window, { Gallery });
+// Reusable page sections.
+
+const { useState: useStateS, useEffect: useEffectS, useRef: useRefS } = React;
+
+// ---- LazyBg: IntersectionObserver-based background-image loader ---------
+function LazyBg({ src, position = "center 60%", eager = false, className = "", style = {}, children, ...rest }) {
+  const ref = useRefS(null);
+  const [loaded, setLoaded] = useStateS(eager);
+  useEffectS(() => {
+    if (loaded || !ref.current) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setLoaded(true); obs.disconnect(); }
+    }, { rootMargin: "300px" });
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [loaded]);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        ...style,
+        backgroundImage: loaded ? `url(${src})` : "none",
+        backgroundSize: "cover",
+        backgroundPosition: position,
+        backgroundColor: "var(--paper-2)",
+        transition: "opacity .5s ease",
+        opacity: loaded ? 1 : 0.001,
+      }}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ---- Hero ---------------------------------------------------------------
+function Hero({ onScrollDown, photoIdx, photos }) {
+  const L = window.LISTING;
+  const photo = photos[photoIdx];
+  const hasTerrace = (L.outdoorSqft || 0) > 0;
+  const bathsLabel = L.baths + (L.halfBaths ? ".5" : "");
+  const bedsLabel = L.beds + (L.dens ? ` BED + ${L.dens === 1 ? "DEN" : `${L.dens} DENS`}` : " BED");
+  return (
+    <section
+      id="top"
+      className="relative overflow-hidden min-h-[600px] md:min-h-[720px]"
+      style={{ height: "100vh" }}
+    >
+      <LazyBg
+        src={photo}
+        position="center 60%"
+        eager
+        style={{ position: "absolute", inset: 0, transform: "scale(1.03)" }}
+      />
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(180deg, rgba(15,12,10,.55) 0%, rgba(15,12,10,.18) 26%, rgba(15,12,10,.05) 60%, rgba(15,12,10,.7) 100%)",
+      }} />
+      <div
+        className="container relative h-full flex flex-col justify-between py-6 md:py-8"
+        style={{ color: "var(--paper)" }}
+      >
+        {/* Top meta row */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pt-14 md:pt-16">
+          <div style={{ fontFamily: "var(--sans)", fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", opacity: .85 }}>
+            {L.status} · Private Viewings by Appointment
+          </div>
+          <div style={{ fontFamily: "var(--sans)", fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", opacity: .85 }}>
+            MLS® {L.mlsNum} · {L.neighbourhood}
+          </div>
+        </div>
+
+        {/* Address block */}
+        <div className="pb-10 md:pb-20 max-w-[1100px]">
+          <div style={{ fontFamily: "var(--sans)", fontSize: 12, letterSpacing: ".24em", textTransform: "uppercase", opacity: .8, marginBottom: 20 }} className="md:mb-7">
+            A Townhouse at {L.building} · {L.city.split(",")[0]}
+          </div>
+          <h1 className="display" style={{
+            fontSize: "clamp(48px, 13vw, 184px)",
+            margin: 0,
+            color: "var(--paper)",
+            lineHeight: .92,
+          }}>
+            1260 <em style={{ color: "#d9c8a8" }}>Richards</em>
+          </h1>
+          <div
+            className="flex items-center flex-wrap gap-x-3 gap-y-2 md:gap-x-6 mt-5 md:mt-7"
+            style={{ fontFamily: "var(--sans)", fontSize: 13, letterSpacing: ".06em" }}
+          >
+            <span>{bedsLabel}</span>
+            <span style={{ opacity: .4 }}>·</span>
+            <span>{bathsLabel} BATH</span>
+            <span style={{ opacity: .4 }}>·</span>
+            <span>{L.sqft.toLocaleString()} SQ.FT.</span>
+            <span style={{ opacity: .4 }}>·</span>
+            <span>PRIVATE GARAGE</span>
+            {hasTerrace && <>
+              <span style={{ opacity: .4 }}>·</span>
+              <span>{L.outdoorSqft} SQ.FT. TERRACE</span>
+            </>}
+          </div>
+        </div>
+
+        {/* Bottom row */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 pb-4 md:pb-7">
+          <button onClick={onScrollDown} style={{
+            background: "transparent", border: 0, color: "var(--paper)", padding: 0,
+            display: "flex", alignItems: "center", gap: 16,
+          }}>
+            <span style={{
+              width: 48, height: 48, borderRadius: 999,
+              border: "1px solid rgba(244,240,232,.4)",
+              display: "grid", placeItems: "center", fontSize: 18,
+            }} className="md:!w-14 md:!h-14 md:!text-xl">↓</span>
+            <span style={{ fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase" }}>Begin the tour</span>
+          </button>
+          <div
+            className="text-left sm:text-right"
+            style={{ fontFamily: "var(--serif)", fontWeight: 300, fontStyle: "italic" }}
+          >
+            <span style={{ fontSize: "clamp(22px, 4vw, 34px)" }}>offered at {L.price}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---- Sticky nav ---------------------------------------------------------
+function Nav({ onInquire }) {
+  const [scrolled, setScrolled] = useStateS(false);
+  const [open, setOpen] = useStateS(false);
+  useEffectS(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  useEffectS(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+  const sections = [
+    ["The Address", "address"],
+    ["The Rare Details", "rare"],
+    ["Tour", "gallery"],
+    ["The Home", "home"],
+    ["Neighbourhood", "hood"],
+    ["Inquire", "inquire"],
+  ];
+  const navColor = (scrolled || open) ? "var(--ink)" : "var(--paper)";
+  return (
+    <>
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 80,
+        padding: scrolled ? "14px 0" : "22px 0",
+        background: (scrolled || open) ? "rgba(244,240,232,.94)" : "transparent",
+        backdropFilter: (scrolled || open) ? "blur(14px)" : "none",
+        WebkitBackdropFilter: (scrolled || open) ? "blur(14px)" : "none",
+        borderBottom: scrolled ? "1px solid var(--line-soft)" : "1px solid transparent",
+        transition: "all .3s ease",
+        color: navColor,
+      }}>
+        <div className="container flex items-center justify-between">
+          <a href="#top" onClick={() => setOpen(false)} style={{
+            textDecoration: "none", color: "inherit",
+            fontFamily: "var(--serif)", fontSize: 22, letterSpacing: "-.01em",
+          }}>
+            1260 <em style={{ fontStyle: "italic", opacity: .7 }}>Richards</em>
+          </a>
+          <div className="hidden md:flex items-center gap-8">
+            {sections.map(([label, id]) => (
+              <a key={id} href={`#${id}`}
+                onClick={(e) => { if (id === "inquire") { e.preventDefault(); onInquire(); } }}
+                style={{
+                  color: "inherit", textDecoration: "none",
+                  fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase",
+                  fontWeight: 500, opacity: .85,
+                }}>{label}</a>
+            ))}
+          </div>
+          <button
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen(o => !o)}
+            className="md:hidden"
+            style={{
+              background: "transparent", border: 0, color: "inherit",
+              width: 40, height: 40, padding: 0,
+              display: "grid", placeItems: "center",
+            }}>
+            <span style={{ position: "relative", width: 22, height: 14, display: "block" }}>
+              <span style={{ position: "absolute", left: 0, right: 0, height: 1, background: "currentColor", top: open ? 6 : 0, transform: open ? "rotate(45deg)" : "none", transition: "all .25s ease" }} />
+              <span style={{ position: "absolute", left: 0, right: 0, height: 1, background: "currentColor", top: 6, opacity: open ? 0 : 1, transition: "opacity .15s ease" }} />
+              <span style={{ position: "absolute", left: 0, right: 0, height: 1, background: "currentColor", top: open ? 6 : 13, transform: open ? "rotate(-45deg)" : "none", transition: "all .25s ease" }} />
+            </span>
+          </button>
+        </div>
+      </nav>
+      {/* Mobile sheet */}
+      <div
+        className="md:hidden"
+        style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "var(--paper)",
+          zIndex: 70,
+          paddingTop: 84, paddingBottom: 40,
+          transform: open ? "translateY(0)" : "translateY(-100%)",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "transform .35s cubic-bezier(.4,.2,.2,1), opacity .25s ease",
+          overflowY: "auto",
+        }}>
+        <div className="container" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {sections.map(([label, id]) => (
+            <a key={id} href={`#${id}`}
+              onClick={(e) => {
+                if (id === "inquire") { e.preventDefault(); setOpen(false); onInquire(); }
+                else { setOpen(false); }
+              }}
+              style={{
+                color: "var(--ink)", textDecoration: "none",
+                fontFamily: "var(--serif)", fontSize: 36, fontWeight: 300,
+                padding: "14px 0", borderBottom: "1px solid var(--line-soft)",
+              }}>{label}</a>
+          ))}
+          <div style={{ marginTop: 36, fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", color: "var(--ink-3)" }}>
+            {window.LISTING?.agentName} · {window.LISTING?.agentPhone}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---- Stat strip ---------------------------------------------------------
+function StatStrip() {
+  const L = window.LISTING;
+  const bedsLabel = L.dens ? `${L.beds} + ${L.dens === 1 ? "Den" : `${L.dens} Dens`}` : `${L.beds}`;
+  const bathsLabel = L.baths + (L.halfBaths ? ".5" : "");
+  const baseStats = [
+    { v: bedsLabel, l: "Bedrooms" },
+    { v: bathsLabel, l: "Bathrooms" },
+    { v: L.sqft.toLocaleString(), l: "Interior sq.ft." },
+    { v: L.ceilingFt, l: "Ceiling height" },
+    { v: "1", l: "Private garage" },
+    { v: "1", l: "Parking spot" },
+  ];
+  const stats = (L.outdoorSqft || 0) > 0
+    ? [
+        { v: bedsLabel, l: "Bedrooms" },
+        { v: bathsLabel, l: "Bathrooms" },
+        { v: L.sqft.toLocaleString(), l: "Interior sq.ft." },
+        { v: L.outdoorSqft.toLocaleString(), l: "Terrace sq.ft." },
+        { v: L.ceilingFt, l: "Ceiling height" },
+        { v: "1", l: "Private garage" },
+      ]
+    : baseStats;
+  return (
+    <section id="address" className="pt-20 md:pt-32 pb-14 md:pb-20" style={{ borderTop: "1px solid var(--line-soft)" }}>
+      <div className="container">
+        <div className="eyebrow" style={{ marginBottom: 22 }}>The Address · Yaletown · Vancouver</div>
+        <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-8 md:gap-20 md:items-end mb-12 md:mb-20">
+          <h2 className="display" style={{ fontSize: "clamp(36px, 6vw, 92px)", margin: 0 }}>
+            A townhouse with its own front door —<br/>
+            <em>two storeys above the seawall.</em>
+          </h2>
+          <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--ink-2)", maxWidth: 440 }}>
+            Hidden in plain sight at the base of The Grace, 1260 Richards is one of a small number of true two-storey townhouses in Yaletown — addressed to the street, gated, and entered through a hedged garden. Inside, a great room rises nineteen feet to a northwest-facing window wall.
+          </p>
+        </div>
+        <div
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+          style={{
+            gap: 1,
+            background: "var(--line-soft)",
+            borderTop: "1px solid var(--line)",
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          {stats.map((s) => (
+            <div
+              key={s.l}
+              className="px-5 py-6 md:px-6 md:py-8"
+              style={{ background: "var(--paper)" }}
+            >
+              <div style={{ fontFamily: "var(--serif)", fontWeight: 300, lineHeight: 1, marginBottom: 10, fontSize: "clamp(36px, 5vw, 56px)" }}>{s.v}</div>
+              <div style={{ fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ink-3)" }}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---- Rarity ------------------------------------------------------------
+function Rarity() {
+  const items = window.RARITY;
+  return (
+    <section id="rare" className="py-20 md:py-32 lg:py-36" style={{ background: "var(--paper-2)" }}>
+      <div className="container">
+        <div className="eyebrow" style={{ marginBottom: 22 }}>What makes it rare</div>
+        <h2
+          className="display mb-14 md:mb-20 lg:mb-24"
+          style={{ fontSize: "clamp(40px, 7vw, 108px)", margin: 0, maxWidth: 1100 }}
+        >
+          Four details you will <em>not</em> find again.
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2">
+          {items.map((it) => (
+            <div
+              key={it.n}
+              className="py-10 md:py-14 md:pr-14 md:[&:nth-child(odd)]:border-r md:[&:nth-child(even)]:pl-14 md:[&:nth-child(even)]:pr-0"
+              style={{
+                borderTop: "1px solid var(--line)",
+                borderRightColor: "var(--line)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", gap: 18, marginBottom: 24 }}>
+                <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontStyle: "italic", color: "var(--accent-deep)" }}>{it.n}</div>
+                <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
+              </div>
+              <h3 style={{ fontFamily: "var(--serif)", fontWeight: 400, lineHeight: 1.1, margin: "0 0 18px", letterSpacing: "-.005em", fontSize: "clamp(26px, 3vw, 36px)" }}>
+                {it.title}
+              </h3>
+              <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--ink-2)", margin: 0, maxWidth: 520 }}>{it.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---- Full bleed quote/image ---------------------------------------------
+function FullBleed({ src, quote, attribution, height = "82vh", position = "center" }) {
+  return (
+    <section
+      className="relative overflow-hidden"
+      style={{ height, minHeight: 420 }}
+    >
+      <LazyBg src={src} position={position} style={{ position: "absolute", inset: 0 }} />
+      {quote && (
+        <>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.2) 0%, rgba(0,0,0,.55) 100%)" }} />
+          <div
+            className="container relative h-full flex flex-col justify-end pb-14 md:pb-20"
+            style={{ color: "var(--paper)" }}
+          >
+            <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: "clamp(24px, 4.4vw, 64px)", fontWeight: 300, lineHeight: 1.15, maxWidth: 1000 }}>
+              "{quote}"
+            </div>
+            {attribution && <div style={{ marginTop: 18, fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", opacity: .8 }}>— {attribution}</div>}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+// ---- The Home -----------------------------------------------------------
+function TheHome() {
+  const highlights = window.HIGHLIGHTS;
+  return (
+    <section id="home" className="py-20 md:py-32 lg:py-36" style={{ borderTop: "1px solid var(--line-soft)" }}>
+      <div className="container">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-10 md:gap-16 lg:gap-20 items-start">
+          <div className="md:sticky md:top-28">
+            <div className="eyebrow" style={{ marginBottom: 22 }}>The Home · Specifications</div>
+            <h2 className="display" style={{ fontSize: "clamp(40px, 6vw, 86px)", margin: 0 }}>
+              Materials of <em>consequence.</em>
+            </h2>
+            <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--ink-2)", marginTop: 24, maxWidth: 420 }}>
+              Built as one of {window.LISTING.building}'s flagship townhouses in {window.LISTING.yearBuilt}, kept original where it should be — cherry millwork, granite, travertine — and updated where it counts. Heritage on the street, modern in use.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="#inquire" className="inline-block" style={{
+                background: "var(--ink)", color: "var(--paper)",
+                padding: "14px 22px", fontSize: 11, letterSpacing: ".22em",
+                textTransform: "uppercase", fontWeight: 500, textDecoration: "none",
+              }}>Request floor plan</a>
+              <a href="#gallery" className="inline-block" style={{
+                background: "transparent", color: "var(--ink)", border: "1px solid var(--ink)",
+                padding: "14px 22px", fontSize: 11, letterSpacing: ".22em",
+                textTransform: "uppercase", fontWeight: 500, textDecoration: "none",
+              }}>Photo tour</a>
+            </div>
+          </div>
+
+          <div>
+            <dl style={{ margin: 0, borderTop: "1px solid var(--line)" }}>
+              {highlights.map(([k, v]) => (
+                <div
+                  key={k}
+                  className="grid grid-cols-[1fr_1.4fr] gap-4 items-baseline"
+                  style={{ padding: "20px 0", borderBottom: "1px solid var(--line-soft)" }}
+                >
+                  <dt style={{ fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ink-3)" }}>{k}</dt>
+                  <dd style={{ margin: 0, fontFamily: "var(--serif)", fontWeight: 400, letterSpacing: "-.005em", fontSize: "clamp(18px, 2.5vw, 26px)" }}>{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---- Floor Plan ---------------------------------------------------------
+function FloorPlan() {
+  const levels = [
+    {
+      label: "Main Floor",
+      sqft: "874 sq.ft.",
+      ceiling: "6′ 10″ to 18′ 2″",
+      image: "photos/floorplan_main.jpg",
+      blurb: "The living room rises over eighteen feet to the upper-floor ceiling.",
+      rooms: [
+        ["Living Room", "16′0″ × 11′4″"],
+        ["Kitchen", "14′5″ × 13′0″"],
+        ["Dining Room", "14′5″ × 9′7″"],
+        ["Den", "7′0″ × 7′5″"],
+        ["Foyer", "6′5″ × 6′8″"],
+        ["Laundry", "9′8″ × 7′4″"],
+        ["Porch", "8′0″ × 6′10″"],
+        ["Patio", "11′1″ × 3′5″"],
+      ],
+    },
+    {
+      label: "Upper Floor",
+      sqft: "714 sq.ft.",
+      ceiling: "7′ 9″ to 9′ 3″",
+      image: "photos/floorplan_upper.jpg",
+      blurb: "Two bedrooms, a flex area, and an open-to-below overlook of the great room.",
+      rooms: [
+        ["Primary Bedroom", "13′4″ × 12′7″"],
+        ["Ensuite", "10′10″ × 7′5″"],
+        ["Bedroom", "11′1″ × 9′1″"],
+        ["Bath", "7′6″ × 4′11″"],
+        ["Flex Area", "13′4″ × 7′6″"],
+      ],
+    },
+    {
+      label: "Lower Floor",
+      sqft: "65 sq.ft.",
+      ceiling: "16′ 0″",
+      image: "photos/floorplan_lower.jpg",
+      blurb: "Direct interior access to the 288 sq.ft. attached garage.",
+      rooms: [
+        ["Garage", "14′7″ × 17′11″"],
+        ["Garage door", "8′7″ × 7′0″–7′5″"],
+      ],
+    },
+  ];
+  const totals = [
+    ["Total Interior",  "1,703 sq.ft."],
+    ["Attached Garage", "288 sq.ft."],
+  ];
+  return (
+    <section id="plan" className="py-20 md:py-32 lg:py-36" style={{ background: "var(--paper-2)" }}>
+      <div className="container">
+        <div className="eyebrow" style={{ marginBottom: 22 }}>The Plan · Three levels</div>
+        <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-8 md:gap-16 lg:gap-20 md:items-end mb-12 md:mb-16">
+          <h2 className="display" style={{ fontSize: "clamp(40px, 6vw, 86px)", margin: 0 }}>
+            A house, <em>stacked.</em>
+          </h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, borderTop: "1px solid var(--line)" }}>
+            {totals.map(([k, v]) => (
+              <li key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "12px 0", borderBottom: "1px solid var(--line-soft)" }}>
+                <span style={{ fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ink-3)" }}>{k}</span>
+                <span style={{ fontFamily: "var(--serif)", fontSize: 22 }}>{v}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          {levels.map((lvl) => (
+            <div
+              key={lvl.label}
+              className="flex flex-col p-6 md:p-8"
+              style={{ background: "var(--paper)", border: "1px solid var(--line-soft)" }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4 }}>
+                <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 400 }}>{lvl.label}</div>
+                <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontStyle: "italic", color: "var(--accent-deep)" }}>{lvl.sqft}</div>
+              </div>
+              <div style={{ fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 22 }}>
+                Ceiling · {lvl.ceiling}
+              </div>
+              <div className="grid place-items-center mb-5" style={{ background: "var(--paper-2)", padding: 18, minHeight: 240 }}>
+                <img
+                  src={lvl.image}
+                  alt={`${lvl.label} floor plan diagram`}
+                  loading="lazy"
+                  decoding="async"
+                  style={{ width: "100%", height: "auto", display: "block", maxHeight: 360, objectFit: "contain" }}
+                />
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--ink-2)", margin: "0 0 18px", fontStyle: "italic" }}>{lvl.blurb}</p>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, borderTop: "1px solid var(--line-soft)" }}>
+                {lvl.rooms.map(([n, d]) => (
+                  <li key={n} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderBottom: "1px solid var(--line-soft)", fontSize: 13, color: "var(--ink-2)" }}>
+                    <span>{n}</span><span style={{ fontFamily: "var(--serif)", fontSize: 15 }}>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 32, fontSize: 12, color: "var(--ink-3)", fontStyle: "italic" }}>
+          Floor plan by Optimum Floor Plan Designs. Drawn for marketing illustration; ANSI Z765 standards used to calculate square footage. Buyer to verify.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+// ---- Neighbourhood ------------------------------------------------------
+function Neighbourhood() {
+  const places = window.NEIGHBOURHOOD;
+  return (
+    <section id="hood" className="py-20 md:py-32 lg:py-36" style={{ borderTop: "1px solid var(--line-soft)" }}>
+      <div className="container">
+        <div className="eyebrow" style={{ marginBottom: 22 }}>The Neighbourhood · Yaletown</div>
+        <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 md:gap-16 lg:gap-20 items-start">
+          <div>
+            <h2 className="display" style={{ fontSize: "clamp(40px, 6vw, 92px)", margin: 0 }}>
+              The seawall, two blocks <em>down the hill.</em>
+            </h2>
+            <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--ink-2)", marginTop: 24, maxWidth: 540 }}>
+              1260 Richards sits between Davie and Drake, a quiet stretch of converted warehouses and tree-lined block faces. The seawall, George Wainborn Park and the Roundhouse SkyTrain are all under five minutes on foot. Provence, Blue Water, Homer Street Café and the marinaside restaurants are even closer.
+            </p>
+            <div className="mt-8">
+              <WalkScore />
+            </div>
+          </div>
+          <div>
+            <SimpleMap />
+            <ul style={{ listStyle: "none", padding: 0, margin: "32px 0 0", borderTop: "1px solid var(--line)" }}>
+              {places.map(p => (
+                <li
+                  key={p.p}
+                  className="flex justify-between items-baseline gap-4"
+                  style={{ padding: "14px 0", borderBottom: "1px solid var(--line-soft)" }}
+                >
+                  <span style={{ fontFamily: "var(--serif)", fontSize: "clamp(17px, 2vw, 22px)" }}>{p.p}</span>
+                  <span style={{ fontFamily: "var(--sans)", fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ink-3)", whiteSpace: "nowrap" }}>{p.d}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WalkScore() {
+  const items = [["Walk", 96], ["Transit", 100], ["Bike", 94]];
+  return (
+    <div className="grid grid-cols-3 gap-3 md:gap-5">
+      {items.map(([l, v]) => (
+        <div key={l} className="p-4 md:p-5" style={{ background: "var(--paper-2)" }}>
+          <div style={{ fontSize: 10, letterSpacing: ".22em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>{l} score</div>
+          <div style={{ fontFamily: "var(--serif)", fontWeight: 300, lineHeight: 1, fontSize: "clamp(36px, 5vw, 56px)" }}>{v}</div>
+          <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>{v >= 90 ? "Walker's Paradise" : ""}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SimpleMap() {
+  // Stylized, abstract "block plan" map. Streets named.
+  const ink = "rgba(26,23,20,.45)";
+  const street = "rgba(26,23,20,.18)";
+  const label = "rgba(26,23,20,.55)";
+  const accent = "var(--accent-deep)";
+  return (
+    <div style={{ background: "var(--paper-2)", padding: 28, position: "relative" }}>
+      <svg viewBox="0 0 500 360" style={{ width: "100%", height: "auto", display: "block" }}>
+        {/* False Creek water */}
+        <path d="M 0 300 L 0 360 L 500 360 L 500 280 Q 360 320 220 310 Q 80 305 0 300 Z" fill="rgba(120,150,165,.18)" />
+        <text x="380" y="345" fontFamily="var(--serif)" fontStyle="italic" fontSize="16" fill={label}>False Creek</text>
+        {/* Streets */}
+        {[60, 120, 180, 240, 300].map((y, i) => (
+          <line key={"h"+i} x1="0" y1={y} x2="500" y2={y} stroke={street} strokeWidth="1.2" />
+        ))}
+        {[80, 180, 280, 380].map((x, i) => (
+          <line key={"v"+i} x1={x} y1="0" x2={x} y2={i === 0 ? 360 : 300} stroke={street} strokeWidth="1.2" />
+        ))}
+        {/* Diagonal Pacific blvd */}
+        <line x1="0" y1="270" x2="500" y2="240" stroke={street} strokeWidth="1.5" />
+        {/* Street labels */}
+        <text x="20" y="55" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">DAVIE ST</text>
+        <text x="20" y="175" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">DRAKE ST</text>
+        <text x="85" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 85 240)">RICHARDS</text>
+        <text x="185" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 185 240)">HOMER</text>
+        <text x="285" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 285 240)">HAMILTON</text>
+        <text x="385" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 385 240)">MAINLAND</text>
+        {/* Park */}
+        <rect x="20" y="305" width="60" height="30" fill="rgba(110,135,90,.35)" />
+        <text x="50" y="324" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>WAINBORN PARK</text>
+        {/* The property — between Davie and Drake on Richards */}
+        <circle cx="80" cy="140" r="9" fill={accent} />
+        <circle cx="80" cy="140" r="22" fill="none" stroke={accent} strokeWidth="1" opacity=".4" />
+        <circle cx="80" cy="140" r="38" fill="none" stroke={accent} strokeWidth=".6" opacity=".25" />
+        <text x="100" y="138" fontFamily="var(--serif)" fontStyle="italic" fontSize="16" fill={accent}>1260 Richards</text>
+        <text x="100" y="154" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">YOU ARE HERE</text>
+        {/* Skytrain */}
+        <circle cx="250" cy="260" r="5" fill="var(--ink)" />
+        <text x="262" y="264" fontFamily="var(--sans)" fontSize="9" fill={label}>Yaletown–Roundhouse Stn.</text>
+        {/* Aquabus */}
+        <circle cx="140" cy="320" r="4" fill="var(--ink)" />
+        <text x="150" y="324" fontFamily="var(--sans)" fontSize="9" fill={label}>Aquabus to Granville Island</text>
+      </svg>
+    </div>
+  );
+}
+
+// ---- Building ----------------------------------------------------------
+function TheBuilding() {
+  const amenities = window.AMENITIES || [];
+  return (
+    <section className="py-20 md:py-32 lg:py-36" style={{ background: "var(--ink)", color: "var(--paper)" }}>
+      <div className="container">
+        <div className="eyebrow" style={{ marginBottom: 22, color: "rgba(244,240,232,.65)" }}>The Building · The Grace</div>
+        <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-8 md:gap-16 lg:gap-20 md:items-end">
+          <h2 className="display" style={{ fontSize: "clamp(40px, 7vw, 110px)", margin: 0, color: "var(--paper)" }}>
+            Heritage stone <em style={{ color: "#d9c8a8" }}>and brick,</em><br/>concrete bones.
+          </h2>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: "rgba(244,240,232,.75)", margin: 0 }}>
+            The Grace was completed in 2008, designed in conversation with the heritage character of the block — arched windows, brick lintels, hand-set sandstone — wrapped over a modern concrete tower. The townhouses at the base are its quietest and most domestic gesture.
+          </p>
+        </div>
+        <div
+          className="mt-12 md:mt-20 grid grid-cols-2 md:grid-cols-4"
+          style={{
+            gap: 1,
+            background: "rgba(244,240,232,.15)",
+            borderTop: "1px solid rgba(244,240,232,.15)",
+            borderBottom: "1px solid rgba(244,240,232,.15)",
+          }}
+        >
+          {[
+            [String(window.LISTING.yearBuilt), "Year built"],
+            ["Concrete", "Construction"],
+            ["31", "Storeys (tower)"],
+            ["8", "Townhouses"],
+          ].map((s) => (
+            <div
+              key={s[1]}
+              className="px-5 py-6 md:px-6 md:py-8"
+              style={{ background: "var(--ink)" }}
+            >
+              <div style={{ fontFamily: "var(--serif)", fontWeight: 300, lineHeight: 1, marginBottom: 10, fontSize: "clamp(34px, 4.5vw, 52px)" }}>{s[0]}</div>
+              <div style={{ fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(244,240,232,.55)" }}>{s[1]}</div>
+            </div>
+          ))}
+        </div>
+
+        {amenities.length > 0 && (
+          <div className="mt-16 md:mt-24">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-16 lg:gap-20 md:items-end mb-10 md:mb-14">
+              <div className="eyebrow" style={{ color: "rgba(244,240,232,.65)" }}>Resident Amenities</div>
+              <p style={{ fontSize: 16, lineHeight: 1.7, color: "rgba(244,240,232,.75)", margin: 0, maxWidth: 520 }}>
+                For the rare days you stay home, the building keeps a fitness centre, a heated indoor pool, a seasonal outdoor pool, and a landscaped terrace — all a short walk from your own front door.
+              </p>
+            </div>
+            <ul
+              className="grid grid-cols-2 md:grid-cols-4"
+              style={{
+                listStyle: "none", padding: 0, margin: 0,
+                gap: 1,
+                background: "rgba(244,240,232,.12)",
+                borderTop: "1px solid rgba(244,240,232,.15)",
+                borderBottom: "1px solid rgba(244,240,232,.15)",
+              }}
+            >
+              {amenities.map((a) => (
+                <li
+                  key={a.name}
+                  className="px-5 py-6 md:px-7 md:py-9"
+                  style={{ background: "var(--ink)" }}
+                >
+                  <div style={{ fontFamily: "var(--serif)", fontWeight: 400, lineHeight: 1.1, marginBottom: 8, letterSpacing: "-.005em", fontSize: "clamp(22px, 2.5vw, 30px)" }}>{a.name}</div>
+                  <div style={{ fontSize: 12, letterSpacing: ".08em", color: "rgba(244,240,232,.6)" }}>{a.note}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ---- Inquire form -----------------------------------------------------
+function Inquire({ openRef }) {
+  const L = window.LISTING;
+  const initials = (L.agentName || "").split(/\s+/).map(s => s[0]).filter(Boolean).slice(0,2).join("").toUpperCase();
+  const [form, setForm] = useStateS({ name: "", email: "", phone: "", date: "", message: `I'd like to arrange a private viewing of ${L.address.split(",")[0]}.` });
+  const [sent, setSent] = useStateS(false);
+  const [submitting, setSubmitting] = useStateS(false);
+
+  function update(k, v) { setForm(f => ({ ...f, [k]: v })); }
+  function submit(e) {
+    e.preventDefault();
+    if (!form.name || !form.email) return;
+    setSubmitting(true);
+    setTimeout(() => { setSubmitting(false); setSent(true); }, 900);
+  }
+
+  const inputStyle = {
+    width: "100%", padding: "16px 0",
+    background: "transparent", border: 0, borderBottom: "1px solid var(--line)",
+    fontFamily: "var(--sans)", fontSize: 15, color: "var(--ink)",
+    outline: "none",
+  };
+  const labelStyle = { fontSize: 10, letterSpacing: ".22em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6, display: "block" };
+
+  return (
+    <section id="inquire" ref={openRef} className="py-20 md:py-32 lg:py-36" style={{ borderTop: "1px solid var(--line-soft)" }}>
+      <div className="container">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.1fr] gap-10 md:gap-16 lg:gap-20 items-start">
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 22 }}>Private Viewing</div>
+            <h2 className="display" style={{ fontSize: "clamp(40px, 6vw, 92px)", margin: 0 }}>
+              Come <em>see it.</em>
+            </h2>
+            <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--ink-2)", marginTop: 24, maxWidth: 440 }}>
+              Showings are by appointment only, conducted personally by the listing agent. Most weekday mornings and weekend afternoons are available. Offers are reviewed as received.
+            </p>
+
+            <div className="mt-10 md:mt-14 pt-7" style={{ borderTop: "1px solid var(--line)" }}>
+              <div className="eyebrow" style={{ marginBottom: 18 }}>Listing Agent</div>
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:items-center">
+                <div style={{
+                  width: 72, height: 72, borderRadius: 999,
+                  background: "var(--paper-3)",
+                  display: "grid", placeItems: "center",
+                  fontFamily: "var(--serif)", fontSize: 26, color: "var(--ink-2)",
+                  flexShrink: 0,
+                }}>{initials || "—"}</div>
+                <div>
+                  <div style={{ fontFamily: "var(--serif)", fontSize: 26 }}>{L.agentName}</div>
+                  <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 4 }}>{L.agentTitle} · {L.agentBrokerage}</div>
+                  <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1" style={{ fontSize: 14 }}>
+                    <a href={`tel:${(L.agentPhone||"").replace(/\s/g,"")}`} style={{ textDecoration: "none" }}>{L.agentPhone}</a>
+                    <span style={{ color: "var(--ink-3)" }}>·</span>
+                    <a href={`mailto:${L.agentEmail}`} style={{ textDecoration: "none", wordBreak: "break-all" }}>{L.agentEmail}</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <form
+            onSubmit={submit}
+            className="inquire-form p-6 sm:p-10 md:p-12"
+            style={{ background: "var(--paper-2)" }}
+          >
+            {sent ? (
+              <div className="py-12 text-center">
+                <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: "clamp(28px, 5vw, 44px)", marginBottom: 12 }}>Thank you.</div>
+                <p style={{ color: "var(--ink-2)", maxWidth: 380, margin: "0 auto", lineHeight: 1.6 }}>Your viewing request has been received. {L.agentName.split(" ")[0]} will follow up within the hour to confirm a time.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                  <div>
+                    <label style={labelStyle}>Name *</label>
+                    <input style={inputStyle} value={form.name} onChange={e => update("name", e.target.value)} required />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Phone</label>
+                    <input style={inputStyle} value={form.phone} onChange={e => update("phone", e.target.value)} type="tel" />
+                  </div>
+                </div>
+                <div style={{ marginTop: 18 }}>
+                  <label style={labelStyle}>Email *</label>
+                  <input style={inputStyle} value={form.email} onChange={e => update("email", e.target.value)} type="email" required />
+                </div>
+                <div style={{ marginTop: 18 }}>
+                  <label style={labelStyle}>Preferred date</label>
+                  <input style={inputStyle} value={form.date} onChange={e => update("date", e.target.value)} type="date" />
+                </div>
+                <div style={{ marginTop: 18 }}>
+                  <label style={labelStyle}>Message</label>
+                  <textarea style={{ ...inputStyle, minHeight: 100, resize: "vertical", paddingTop: 14 }} value={form.message} onChange={e => update("message", e.target.value)} />
+                </div>
+                <div className="mt-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: ".06em" }}>
+                    By submitting you agree to be contacted about this listing.
+                  </div>
+                  <button type="submit" disabled={submitting} className="w-full sm:w-auto" style={{
+                    background: "var(--ink)", color: "var(--paper)",
+                    padding: "16px 28px", fontSize: 11, letterSpacing: ".22em",
+                    textTransform: "uppercase", fontWeight: 500, border: 0,
+                    opacity: submitting ? .6 : 1,
+                  }}>
+                    {submitting ? "Sending…" : "Request viewing"}
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---- Footer ----------------------------------------------------------
+function Footer() {
+  const L = window.LISTING;
+  return (
+    <footer className="py-12 md:py-14" style={{ borderTop: "1px solid var(--line)", background: "var(--paper)" }}>
+      <div className="container grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div>
+          <div style={{ fontFamily: "var(--serif)", fontSize: 22, marginBottom: 6 }}>1260 <em>Richards</em></div>
+          <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{L.city} · {L.postal}</div>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--ink-3)", maxWidth: 520, lineHeight: 1.7, letterSpacing: ".02em" }}>
+          Property information is provided for informational purposes only and is not guaranteed. Measurements approximate. Listing presented by {L.agentName}, {L.agentBrokerage}.
+        </div>
+        <div className="md:text-right" style={{ fontSize: 11, color: "var(--ink-3)" }}>
+          © {new Date().getFullYear()} {L.agentBrokerage}
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+Object.assign(window, { Hero, Nav, StatStrip, Rarity, FullBleed, TheHome, FloorPlan, Neighbourhood, TheBuilding, Inquire, Footer });
+// Main app — composition + tweaks panel
+
+const { useRef } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "palette": "ivory",
+  "accent": "sandstone",
+  "heroPhoto": "photos/001.jpg",
+  "heroCrop": "center 60%",
+  "displayFont": "Cormorant Garamond",
+  "bodyFont": "Inter Tight",
+  "showRarity": true,
+  "showFloorPlan": true,
+  "showNeighbourhood": true,
+  "showBuilding": true
+}/*EDITMODE-END*/;
+
+const PALETTES = {
+  ivory:    { ink: "#1A1714", ink2: "#3A332D", ink3: "#6B6157", paper: "#F4F0E8", paper2: "#EAE4D8", paper3: "#DED6C5" },
+  noir:     { ink: "#F0EBE0", ink2: "#C9C3B6", ink3: "#8F887B", paper: "#161310", paper2: "#1F1B17", paper3: "#28231D" },
+  bone:     { ink: "#2B2825", ink2: "#544F48", ink3: "#86807A", paper: "#FBF9F4", paper2: "#F2EFE8", paper3: "#E6E1D6" },
+  slate:    { ink: "#15171A", ink2: "#3A3F46", ink3: "#6A7079", paper: "#ECEEF1", paper2: "#E0E3E7", paper3: "#D3D7DC" },
+};
+
+const ACCENTS = {
+  sandstone: { c: "oklch(0.62 0.07 50)", deep: "oklch(0.48 0.07 45)", label: "Sandstone" },
+  forest:    { c: "oklch(0.50 0.06 145)", deep: "oklch(0.38 0.06 145)", label: "Forest" },
+  oxblood:   { c: "oklch(0.45 0.10 25)", deep: "oklch(0.34 0.10 22)", label: "Oxblood" },
+  ink:       { c: "oklch(0.30 0.04 250)", deep: "oklch(0.20 0.04 250)", label: "Ink Blue" },
+};
+
+function applyTheme(t) {
+  const p = PALETTES[t.palette] || PALETTES.ivory;
+  const a = ACCENTS[t.accent] || ACCENTS.sandstone;
+  const r = document.documentElement.style;
+  r.setProperty("--ink", p.ink);
+  r.setProperty("--ink-2", p.ink2);
+  r.setProperty("--ink-3", p.ink3);
+  r.setProperty("--paper", p.paper);
+  r.setProperty("--paper-2", p.paper2);
+  r.setProperty("--paper-3", p.paper3);
+  r.setProperty("--accent", a.c);
+  r.setProperty("--accent-deep", a.deep);
+  // Lines need to be derived from paper/ink — use ink rgb if possible
+  r.setProperty("--line", (p.ink.startsWith("#1") || p.ink.startsWith("#2")) ? "rgba(26,23,20,0.16)" : "rgba(240,235,224,0.18)");
+  r.setProperty("--line-soft", (p.ink.startsWith("#1") || p.ink.startsWith("#2")) ? "rgba(26,23,20,0.08)" : "rgba(240,235,224,0.09)");
+  document.body.style.background = p.paper;
+  document.body.style.color = p.ink;
+  // Fonts
+  if (t.displayFont) {
+    r.setProperty("--serif", `"${t.displayFont}", "Times New Roman", serif`);
+  }
+  if (t.bodyFont) {
+    r.setProperty("--sans", `"${t.bodyFont}", -apple-system, "Helvetica Neue", sans-serif`);
+  }
+}
+
+function loadFont(family) {
+  if (!family) return;
+  const id = "font-" + family.replace(/\s+/g, "-");
+  if (document.getElementById(id)) return;
+  const link = document.createElement("link");
+  link.id = id;
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${family.replace(/\s+/g, "+")}:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap`;
+  document.head.appendChild(link);
+}
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const inquireRef = useRef(null);
+
+  // Apply theme on every change
+  React.useEffect(() => {
+    applyTheme(t);
+    loadFont(t.displayFont);
+    loadFont(t.bodyFont);
+  }, [t.palette, t.accent, t.displayFont, t.bodyFont]);
+
+  function scrollToInquire() {
+    inquireRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function scrollToGallery() {
+    document.getElementById("address")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Hero photo set — let user cycle through a few candidates
+  const heroOptions = [
+    { value: "photos/001.jpg", label: "Facade · day" },
+    { value: "photos/005.jpg", label: "Approach"      },
+    { value: "photos/002.jpg", label: "Garden gate"   },
+    { value: "photos/009.jpg", label: "Great room"    },
+    { value: "photos/055.jpg", label: "Terrace"       },
+  ];
+
+  return (
+    <>
+      <Nav onInquire={scrollToInquire} />
+      <Hero onScrollDown={scrollToGallery} photoIdx={0} photos={[t.heroPhoto]} />
+
+      <StatStrip />
+
+      {t.showRarity && <Rarity />}
+
+      <FullBleed
+        src="photos/009.jpg"
+        quote="The great room is the unicorn — nineteen feet to the ceiling, a south-facing wall of glass, and an actual fireplace. You don't get this twice in Yaletown."
+        attribution="Listing notes"
+        height="78vh"
+      />
+
+      <Gallery />
+
+      <TheHome />
+
+      {t.showFloorPlan && <FloorPlan />}
+
+      {t.showNeighbourhood && <Neighbourhood />}
+
+      {t.showBuilding && <TheBuilding />}
+
+      <Inquire openRef={inquireRef} />
+
+      <Footer />
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Palette">
+          <TweakRadio
+            label="Tone"
+            value={t.palette}
+            onChange={v => setTweak("palette", v)}
+            options={[
+              { value: "ivory", label: "Ivory" },
+              { value: "bone",  label: "Bone"  },
+              { value: "slate", label: "Slate" },
+              { value: "noir",  label: "Noir"  },
+            ]}
+          />
+          <TweakRadio
+            label="Accent"
+            value={t.accent}
+            onChange={v => setTweak("accent", v)}
+            options={Object.entries(ACCENTS).map(([k, v]) => ({ value: k, label: v.label }))}
+          />
+        </TweakSection>
+
+        <TweakSection label="Type">
+          <TweakSelect
+            label="Display"
+            value={t.displayFont}
+            onChange={v => setTweak("displayFont", v)}
+            options={[
+              "Cormorant Garamond","Playfair Display","EB Garamond","Marcellus","Libre Caslon Display","Italiana","DM Serif Display"
+            ]}
+          />
+          <TweakSelect
+            label="Body"
+            value={t.bodyFont}
+            onChange={v => setTweak("bodyFont", v)}
+            options={["Inter Tight","Manrope","Work Sans","DM Sans","Outfit","Hanken Grotesk"]}
+          />
+        </TweakSection>
+
+        <TweakSection label="Hero">
+          <TweakSelect
+            label="Photograph"
+            value={t.heroPhoto}
+            onChange={v => setTweak("heroPhoto", v)}
+            options={heroOptions}
+          />
+        </TweakSection>
+
+        <TweakSection label="Sections">
+          <TweakToggle label="Rare details" value={t.showRarity} onChange={v => setTweak("showRarity", v)} />
+          <TweakToggle label="Floor plan" value={t.showFloorPlan} onChange={v => setTweak("showFloorPlan", v)} />
+          <TweakToggle label="Neighbourhood" value={t.showNeighbourhood} onChange={v => setTweak("showNeighbourhood", v)} />
+          <TweakToggle label="The building" value={t.showBuilding} onChange={v => setTweak("showBuilding", v)} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
