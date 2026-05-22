@@ -1388,8 +1388,93 @@ function LazyBg({ src, position = "center 60%", eager = false, className = "", s
   );
 }
 
+// ---- HeroVideo: muted autoplay loop layered over the hero photo ---------
+function HeroVideo() {
+  const ref = useRefS(null);
+  const reduceMotion = typeof window !== "undefined"
+    && window.matchMedia
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  useEffectS(() => {
+    if (!ref.current) return;
+    const p = ref.current.play();
+    if (p && typeof p.catch === "function") p.catch(() => { /* iOS Low Power, etc. — poster carries it */ });
+  }, []);
+  if (reduceMotion) return null;
+  return (
+    <video
+      ref={ref}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      poster="video/hero-poster.jpg"
+      aria-hidden="true"
+      style={{
+        position: "absolute", inset: 0,
+        width: "100%", height: "100%",
+        objectFit: "cover",
+        pointerEvents: "none",
+      }}
+    >
+      <source src="video/hero-loop.webm" type="video/webm" />
+      <source src="video/hero-loop.mp4"  type="video/mp4"  />
+    </video>
+  );
+}
+
+// ---- TrailerModal: click-to-play full trailer with sound ----------------
+function TrailerModal({ open, onClose }) {
+  useEffectS(() => {
+    if (!open) return;
+    function key(e) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", key);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", key);
+      document.body.style.overflow = prev;
+    };
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, background: "rgba(15,12,10,.96)",
+        zIndex: 200, display: "flex", flexDirection: "column",
+      }}
+    >
+      <div
+        className="flex items-center justify-between px-4 py-4 md:px-7 md:py-5"
+        style={{ color: "var(--paper)", gap: 12 }}
+      >
+        <div className="hidden sm:block" style={{ fontFamily: "var(--serif)", fontSize: 22, fontStyle: "italic" }}>1260 Richards · The Film</div>
+        <div />
+        <button onClick={onClose} style={{
+          background: "transparent", border: "1px solid rgba(244,240,232,.3)",
+          color: "var(--paper)", padding: "8px 14px", fontSize: 11,
+          letterSpacing: ".16em", textTransform: "uppercase",
+        }}>Close ✕</button>
+      </div>
+      <div className="flex-1 grid place-items-center px-4 md:px-20 pb-8">
+        <video
+          onClick={(e) => e.stopPropagation()}
+          src="video/trailer-1080p.mp4"
+          poster="video/trailer-poster.jpg"
+          controls
+          autoPlay
+          playsInline
+          preload="metadata"
+          style={{ width: "100%", maxHeight: "82vh", boxShadow: "0 30px 80px rgba(0,0,0,.5)", background: "#000" }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ---- Hero ---------------------------------------------------------------
-function Hero({ onScrollDown, photoIdx, photos }) {
+function Hero({ onScrollDown, onWatchFilm, photoIdx, photos }) {
   const L = window.LISTING;
   const photo = photos[photoIdx];
   const hasTerrace = (L.outdoorSqft || 0) > 0;
@@ -1413,6 +1498,7 @@ function Hero({ onScrollDown, photoIdx, photos }) {
         eager
         style={{ position: "absolute", inset: 0, transform: "scale(1.03)" }}
       />
+      <HeroVideo />
       <div style={{
         position: "absolute", inset: 0,
         background: "linear-gradient(180deg, rgba(15,12,10,.55) 0%, rgba(15,12,10,.22) 28%, rgba(15,12,10,.45) 55%, rgba(15,12,10,.85) 100%)",
@@ -1507,6 +1593,28 @@ function Hero({ onScrollDown, photoIdx, photos }) {
             }} className="md:!w-14 md:!h-14 md:!text-xl">↓</span>
             <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", textShadow: metaShadow }}>Begin the tour</span>
           </button>
+          {onWatchFilm && (
+            <button
+              onClick={onWatchFilm}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 10,
+                padding: "10px 18px",
+                border: "1px solid rgba(244,240,232,.5)",
+                borderRadius: 999,
+                background: "rgba(15,12,10,.35)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                color: "var(--paper)",
+                fontFamily: "var(--sans)",
+                fontSize: 11, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase",
+                textShadow: metaShadow,
+                cursor: "pointer",
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: 9, lineHeight: 1 }}>▶</span>
+              Watch the Film
+            </button>
+          )}
           <div
             className="text-left sm:text-right"
             style={{ fontFamily: "var(--serif)", fontWeight: 300, fontStyle: "italic" }}
@@ -2447,6 +2555,7 @@ function loadFont(family) {
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const inquireRef = useRef(null);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   // Apply theme on every change
   React.useEffect(() => {
@@ -2474,7 +2583,8 @@ function App() {
   return (
     <>
       <Nav onInquire={scrollToInquire} />
-      <Hero onScrollDown={scrollToGallery} photoIdx={0} photos={[t.heroPhoto]} />
+      <Hero onScrollDown={scrollToGallery} onWatchFilm={() => setTrailerOpen(true)} photoIdx={0} photos={[t.heroPhoto]} />
+      <TrailerModal open={trailerOpen} onClose={() => setTrailerOpen(false)} />
 
       <StatStrip />
 
