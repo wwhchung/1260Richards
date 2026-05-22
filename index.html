@@ -1408,7 +1408,7 @@ function HeroVideo() {
       loop
       playsInline
       preload="metadata"
-      poster="video/hero-poster.jpg"
+      poster="videos/hero-poster.jpg"
       aria-hidden="true"
       style={{
         position: "absolute", inset: 0,
@@ -1417,8 +1417,8 @@ function HeroVideo() {
         pointerEvents: "none",
       }}
     >
-      <source src="video/hero-loop.webm" type="video/webm" />
-      <source src="video/hero-loop.mp4"  type="video/mp4"  />
+      <source src="videos/hero-loop.webm" type="videos/webm" />
+      <source src="videos/hero-loop.mp4"  type="videos/mp4"  />
     </video>
   );
 }
@@ -1460,8 +1460,8 @@ function TrailerModal({ open, onClose }) {
       <div className="flex-1 grid place-items-center px-4 md:px-20 pb-8">
         <video
           onClick={(e) => e.stopPropagation()}
-          src="video/trailer-1080p.mp4"
-          poster="video/trailer-poster.jpg"
+          src="videos/trailer-1080p.mp4"
+          poster="videos/hero-poster.jpg"
           controls
           autoPlay
           playsInline
