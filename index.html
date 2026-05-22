@@ -875,9 +875,62 @@ const LISTING = {
   ],
 };
 
-// Format helpers for open-house display ----------------------------------
-function fmtOpenHouseDate(iso, opts = { weekday: "long", month: "long", day: "numeric", year: "numeric" }) {
-  return new Date(iso + "T00:00").toLocaleDateString("en-CA", opts);
+// Open-house helpers -----------------------------------------------------
+// All open house times are wall-clock Vancouver (Pacific). Translate the
+// visitor's current moment into Vancouver time before comparing, so today /
+// tomorrow / past labels are correct regardless of the visitor's timezone,
+// and so DST is handled by Intl (no hardcoded offset).
+const OH_TZ = "America/Vancouver";
+
+function _vanParts(d) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: OH_TZ,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  }).formatToParts(d || new Date());
+  const out = {};
+  for (const p of parts) if (p.type !== "literal") out[p.type] = p.value;
+  if (out.hour === "24") out.hour = "00"; // Safari midnight quirk
+  return out;
+}
+function vancouverDateStr(d) {
+  const { year, month, day } = _vanParts(d);
+  return `${year}-${month}-${day}`;
+}
+function vancouverISO(d) {
+  const p = _vanParts(d);
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}`;
+}
+function addDaysISO(iso, n) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+
+// Returns: "past" | "in-progress" | "today" | "tomorrow" | "upcoming"
+function ohStatus(oh, refDate) {
+  const now   = refDate || new Date();
+  const nowVan = vancouverISO(now);
+  const today  = vancouverDateStr(now);
+  const start  = `${oh.date}T${oh.start}:00`;
+  const end    = `${oh.date}T${oh.end}:00`;
+  if (nowVan >= end)                    return "past";
+  if (nowVan >= start)                  return "in-progress";
+  if (oh.date === today)                return "today";
+  if (oh.date === addDaysISO(today, 1)) return "tomorrow";
+  return "upcoming";
+}
+
+// Past entries drop off the list entirely (3 → 2 → 1 → 0).
+function upcomingOpenHouses(list) {
+  return (list || []).filter(oh => ohStatus(oh) !== "past");
+}
+
+function fmtOpenHouseDate(iso, opts) {
+  const o = opts || { weekday: "long", month: "long", day: "numeric", year: "numeric" };
+  return new Date(iso + "T00:00").toLocaleDateString("en-CA", o);
 }
 function fmtOpenHouseDateShort(iso) {
   return fmtOpenHouseDate(iso, { weekday: "short", month: "short", day: "numeric" });
@@ -891,9 +944,14 @@ function fmtOpenHouseTime(t24) {
 function fmtOpenHouseRange(oh) {
   return `${fmtOpenHouseTime(oh.start)} – ${fmtOpenHouseTime(oh.end)}`;
 }
-function upcomingOpenHouses(list) {
-  const now = new Date();
-  return list.filter(oh => new Date(oh.date + "T" + oh.end + ":00") >= now);
+function ohStatusLabel(status) {
+  return {
+    "past":        "Past",
+    "in-progress": "Happening now",
+    "today":       "Today",
+    "tomorrow":    "Tomorrow",
+    "upcoming":    "Drop-in welcome",
+  }[status] || "Drop-in welcome";
 }
 
 // Curated, captioned photo set. Captions are for the gallery and lightbox.
@@ -1314,11 +1372,10 @@ function Hero({ onScrollDown, photoIdx, photos }) {
   const bedsLabel = L.beds + (L.dens ? ` BED + ${L.dens === 1 ? "DEN" : `${L.dens} DENS`}` : " BED");
   // Sharp + diffuse layered shadow so thin tracked uppercase reads on any photo
   const metaShadow = "0 1px 3px rgba(0,0,0,.7), 0 0 16px rgba(0,0,0,.45)";
-  // Next upcoming open house (if any) — surfaced as a small pill in the hero
+  // Next upcoming open house (if any) — surfaced as a small pill in the hero.
+  // Past entries are filtered out via vancouver-tz-aware ohStatus().
   const nextOpenHouse = upcomingOpenHouses(L.openHouses || [])[0];
-  // Today's date in ISO so we can show "OPEN HOUSE TODAY" when relevant
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const isToday = nextOpenHouse && nextOpenHouse.date === todayIso;
+  const nextStatus = nextOpenHouse ? ohStatus(nextOpenHouse) : null;
   return (
     <section
       id="top"
@@ -1362,9 +1419,13 @@ function Hero({ onScrollDown, photoIdx, photos }) {
                   textShadow: metaShadow,
                 }}>
                 <span style={{ width: 6, height: 6, borderRadius: 999, background: "#d9c8a8", display: "inline-block" }} />
-                {isToday
-                  ? `Open House Today · ${fmtOpenHouseRange(nextOpenHouse)}`
-                  : `Next Open House · ${fmtOpenHouseDateShort(nextOpenHouse.date)} · ${fmtOpenHouseRange(nextOpenHouse)}`}
+                {(() => {
+                  const range = fmtOpenHouseRange(nextOpenHouse);
+                  if (nextStatus === "in-progress") return `Open House Happening Now · ${range}`;
+                  if (nextStatus === "today")       return `Open House Today · ${range}`;
+                  if (nextStatus === "tomorrow")    return `Open House Tomorrow · ${range}`;
+                  return `Next Open House · ${fmtOpenHouseDateShort(nextOpenHouse.date)} · ${range}`;
+                })()}
               </a>
             )}
           </div>
@@ -1671,8 +1732,16 @@ function OpenHouses({ onInquire }) {
   const L = window.LISTING;
   const all = L.openHouses || [];
   if (all.length === 0) return null;
-  const todayIso = new Date().toISOString().slice(0, 10);
+  // Past entries are removed entirely; list shrinks 3 → 2 → 1 → 0
   const upcoming = upcomingOpenHouses(all);
+  // Hide the whole section once every open house has ended — the Inquire
+  // section's private-viewing form is the remaining call-to-action.
+  if (upcoming.length === 0) return null;
+
+  const countLabel = upcoming.length === 1
+    ? "One scheduled open house below"
+    : `${["Two","Three","Four","Five","Six"][upcoming.length - 2] || upcoming.length} scheduled open houses below`;
+
   return (
     <section id="open-houses" className="py-20 md:py-28 lg:py-32" style={{ borderTop: "1px solid var(--line-soft)", background: "var(--paper-2)" }}>
       <div className="container">
@@ -1682,38 +1751,35 @@ function OpenHouses({ onInquire }) {
             Walk in, <em>have a look.</em>
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--ink-2)", margin: 0, maxWidth: 520 }}>
-            Three scheduled open houses below — no booking needed, just drop by. For a quieter walkthrough on your own schedule, you can also <a href="#inquire" onClick={(e) => { if (onInquire) { e.preventDefault(); onInquire(); } }} style={{ borderBottom: "1px solid var(--ink)" }}>request a private viewing</a>.
+            {countLabel} — no booking needed, just drop by. For a quieter walkthrough on your own schedule, you can also <a href="#inquire" onClick={(e) => { if (onInquire) { e.preventDefault(); onInquire(); } }} style={{ borderBottom: "1px solid var(--ink)" }}>request a private viewing</a>.
           </p>
         </div>
 
         <ul style={{ listStyle: "none", padding: 0, margin: 0, borderTop: "1px solid var(--line)" }}>
-          {all.map((oh) => {
-            const isPast = !upcoming.includes(oh);
-            const isToday = oh.date === todayIso;
+          {upcoming.map((oh) => {
+            const status = ohStatus(oh);
             return (
               <li
                 key={oh.date + oh.start}
                 className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 sm:gap-8 items-baseline"
-                style={{
-                  padding: "26px 0",
-                  borderBottom: "1px solid var(--line-soft)",
-                  opacity: isPast ? .4 : 1,
-                }}
+                style={{ padding: "26px 0", borderBottom: "1px solid var(--line-soft)" }}
               >
                 <div style={{
                   fontFamily: "var(--serif)", fontWeight: 400, letterSpacing: "-.005em",
                   fontSize: "clamp(24px, 3vw, 36px)",
-                  textDecoration: isPast ? "line-through" : "none",
                 }}>
                   {fmtOpenHouseDate(oh.date)}
                 </div>
-                <div style={{ fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ink-3)" }}>
-                  {isToday ? "Today" : isPast ? "Past" : "Drop-in welcome"}
+                <div style={{ fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", color: status === "in-progress" ? "var(--accent-deep)" : "var(--ink-3)" }}>
+                  {status === "in-progress" && (
+                    <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 999, background: "var(--accent-deep)", marginRight: 8, verticalAlign: "middle" }} />
+                  )}
+                  {ohStatusLabel(status)}
                 </div>
                 <div style={{
                   fontFamily: "var(--serif)", fontStyle: "italic",
                   fontSize: "clamp(20px, 2.4vw, 28px)",
-                  color: isPast ? "var(--ink-3)" : "var(--accent-deep)",
+                  color: "var(--accent-deep)",
                 }}>
                   {fmtOpenHouseRange(oh)}
                 </div>
