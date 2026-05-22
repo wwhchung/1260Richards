@@ -1023,6 +1023,8 @@ function Hero({ onScrollDown, photoIdx, photos }) {
   const hasTerrace = (L.outdoorSqft || 0) > 0;
   const bathsLabel = L.baths + (L.halfBaths ? ".5" : "");
   const bedsLabel = L.beds + (L.dens ? ` BED + ${L.dens === 1 ? "DEN" : `${L.dens} DENS`}` : " BED");
+  // Sharp + diffuse layered shadow so thin tracked uppercase reads on any photo
+  const metaShadow = "0 1px 3px rgba(0,0,0,.7), 0 0 16px rgba(0,0,0,.45)";
   return (
     <section
       id="top"
@@ -1045,17 +1047,20 @@ function Hero({ onScrollDown, photoIdx, photos }) {
       >
         {/* Top meta row */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pt-14 md:pt-16">
-          <div style={{ fontFamily: "var(--sans)", fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", opacity: .85 }}>
+          <div style={{ fontFamily: "var(--sans)", fontSize: 11, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", textShadow: metaShadow }}>
             {L.status} · Private Viewings by Appointment
           </div>
-          <div style={{ fontFamily: "var(--sans)", fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", opacity: .85 }}>
+          <div style={{ fontFamily: "var(--sans)", fontSize: 11, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", textShadow: metaShadow }}>
             MLS® {L.mlsNum} · {L.neighbourhood}
           </div>
         </div>
 
         {/* Address block */}
         <div className="pb-10 md:pb-20 max-w-[1100px]">
-          <div style={{ fontFamily: "var(--sans)", fontSize: 12, letterSpacing: ".24em", textTransform: "uppercase", opacity: .8, marginBottom: 20 }} className="md:mb-7">
+          <div
+            className="md:mb-7"
+            style={{ fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, letterSpacing: ".24em", textTransform: "uppercase", marginBottom: 20, textShadow: metaShadow }}
+          >
             A Townhouse at {L.building} · {L.city.split(",")[0]}
           </div>
           <h1 className="display" style={{
@@ -1069,17 +1074,17 @@ function Hero({ onScrollDown, photoIdx, photos }) {
           </h1>
           <div
             className="flex items-center flex-wrap gap-x-3 gap-y-2 md:gap-x-6 mt-5 md:mt-7"
-            style={{ fontFamily: "var(--sans)", fontSize: 13, letterSpacing: ".06em" }}
+            style={{ fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500, letterSpacing: ".08em", textShadow: metaShadow }}
           >
             <span>{bedsLabel}</span>
-            <span style={{ opacity: .4 }}>·</span>
+            <span style={{ opacity: .55 }}>·</span>
             <span>{bathsLabel} BATH</span>
-            <span style={{ opacity: .4 }}>·</span>
+            <span style={{ opacity: .55 }}>·</span>
             <span>{L.sqft.toLocaleString()} SQ.FT.</span>
-            <span style={{ opacity: .4 }}>·</span>
+            <span style={{ opacity: .55 }}>·</span>
             <span>PRIVATE GARAGE</span>
             {hasTerrace && <>
-              <span style={{ opacity: .4 }}>·</span>
+              <span style={{ opacity: .55 }}>·</span>
               <span>{L.outdoorSqft} SQ.FT. TERRACE</span>
             </>}
           </div>
@@ -1096,7 +1101,7 @@ function Hero({ onScrollDown, photoIdx, photos }) {
               border: "1px solid rgba(244,240,232,.4)",
               display: "grid", placeItems: "center", fontSize: 18,
             }} className="md:!w-14 md:!h-14 md:!text-xl">↓</span>
-            <span style={{ fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase" }}>Begin the tour</span>
+            <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", textShadow: metaShadow }}>Begin the tour</span>
           </button>
           <div
             className="text-left sm:text-right"
