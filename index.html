@@ -77,21 +77,24 @@
     letter-spacing: -0.02em;
   }
 
-  /* Gallery responsive grid: 1 col on mobile, 12 col on tablet+ */
+  /* Gallery responsive grid: 1 col on mobile, 12 col on tablet+.
+     Tile aspect-ratio always tracks the photo's native AR so the image fills
+     the tile without object-fit cropping. align-items:start preserves each
+     tile's AR even when sibling tiles in the same row are taller. */
   .gallery-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 12px;
+    align-items: start;
   }
   .gallery-grid .gallery-tile {
     grid-column: 1 / -1 !important;
-    aspect-ratio: 4 / 3 !important;
+    aspect-ratio: var(--md-ratio, 3 / 2) !important;
   }
   @media (min-width: 768px) {
     .gallery-grid { grid-template-columns: repeat(12, 1fr); gap: 16px; }
     .gallery-grid .gallery-tile {
       grid-column: span var(--md-span, 6) !important;
-      aspect-ratio: var(--md-ratio, 4 / 3) !important;
     }
   }
 
@@ -670,47 +673,61 @@ const LISTING = {
 };
 
 // Curated, captioned photo set. Captions are for the gallery and lightbox.
+// `ar` = native aspect ratio (width / height). Used to drive each gallery tile's
+// aspect-ratio so the image fills the tile without object-fit cropping.
 const PHOTOS = [
-  { src: "photos/001.jpg", cat: "Exterior",  caption: "Private street-level entry at 1260 Richards" },
-  { src: "photos/009.jpg", cat: "Living",    caption: "Gas fireplace anchors a 19-foot living wall" },
-  { src: "photos/035.jpg", cat: "Living",    caption: "Gas fireplace anchors a 19-foot living wall" },
-  { src: "photos/007.jpg", cat: "Living",    caption: "Open-plan flow between dining and lounge" },
-  { src: "photos/010.jpg", cat: "Living",    caption: "Light-flooded living from south-facing windows" },
-  { src: "photos/012.jpg", cat: "Living",    caption: "Formal seating arrangement, hand-carved mantel" },
-  { src: "photos/013.jpg", cat: "Living",    caption: "Open-plan flow between dining and lounge" },
-  { src: "photos/015.jpg", cat: "Living",    caption: "Evening — fire lit, pendants on" },
-  { src: "photos/046.jpg", cat: "Living",    caption: "Storage Room and Wine Fridge" },
-  { src: "photos/052.jpg", cat: "Living",    caption: "Full Size Washer/Dryer" },
-  { src: "photos/017.jpg", cat: "Kitchen",   caption: "Chef's kitchen with central gas-range island" },
-  { src: "photos/018.jpg", cat: "Kitchen",   caption: "Cherry millwork and granite throughout" },
-  { src: "photos/019.jpg", cat: "Kitchen",   caption: "Sub-Zero refrigeration, integrated appliances" },
-  { src: "photos/020.jpg", cat: "Kitchen",   caption: "Bar seating for three" },
-  { src: "photos/024.jpg", cat: "Kitchen",   caption: "Prep galley with travertine backsplash" },
-  { src: "photos/036.jpg", cat: "Den",       caption: "Den / second living above the great room" },
-  { src: "photos/029.jpg", cat: "Den",       caption: "Mezzanine office with overlook" },
-  { src: "photos/040.jpg", cat: "Bedrooms",  caption: "Primary bedroom" },
-  { src: "photos/042.jpg", cat: "Bedrooms",  caption: "Primary bedroom" },
-  { src: "photos/039.jpg", cat: "Bedrooms",  caption: "Primary bedroom — Terrace" },
-  { src: "photos/040.jpg", cat: "Bedrooms",  caption: "Second bedroom suite with sliding glass" },
-  { src: "photos/048.jpg", cat: "Bedrooms",  caption: "Restful palette, generous proportions" },
-  { src: "photos/049.jpg", cat: "Bath",      caption: "Primary bath — freestanding clawfoot tub" },
-  { src: "photos/050.jpg", cat: "Bath",      caption: "Primary bath - Hand-held shower fixtures, marble tile" },
-  { src: "photos/051.jpg", cat: "Bath",      caption: "Primary bath - Walk-in glass shower" },
-  { src: "photos/052.jpg", cat: "Bath",      caption: "Second bath - Walk-in glass shower" },
-  { src: "photos/047.jpg", cat: "Bath",      caption: "Half bath" },
-  { src: "photos/002.jpg", cat: "Building/Amenities",  caption: "The Grace Tower" },
-  { src: "photos/037.jpg", cat: "Building/Amenities",  caption: "Gym" },
-  { src: "photos/061.jpg", cat: "Building/Amenities",  caption: "Indoor/Outdoor Pool and Hot tub" },
-  { src: "photos/058.jpg", cat: "Building/Amenities",   caption: "European style living" },
-  { src: "photos/059.jpg", cat: "Building/Amenities",   caption: "Gas fire-table for evenings on the city" },
-  { src: "photos/060.jpg", cat: "Building/Amenities",   caption: "A Terrace for gathering" },
-  { src: "photos/053.jpg", cat: "Garage",    caption: "Private interior-access garage — the rare detail" },
-  { src: "photos/055.jpg", cat: "Garage",    caption: "Step from the kitchen into your own bay" },
-  { src: "photos/057.jpg", cat: "Garage",    caption: "Secure, dedicated, fully enclosed" },
-  { src: "photos/002.jpg", cat: "Exterior",  caption: "Heritage-inspired stone & brick facade" },
-  { src: "photos/003.jpg", cat: "Exterior",  caption: "Wrought-iron garden detail" },
-  { src: "photos/004.jpg", cat: "Exterior",  caption: "Hedged street frontage" },
-  { src: "photos/005.jpg", cat: "Exterior",  caption: "Approach from Richards Street" },
+  // Exterior — opens the tour
+  { src: "photos/001.jpg", cat: "Exterior",  ar: 1.5,   caption: "Private street-level entry at 1260 Richards" },
+  { src: "photos/005.jpg", cat: "Exterior",  ar: 1.5,   caption: "Approach from Richards Street" },
+  { src: "photos/004.jpg", cat: "Exterior",  ar: 1.5,   caption: "Hedged street frontage" },
+  { src: "photos/003.jpg", cat: "Exterior",  ar: 0.667, caption: "Wrought-iron garden detail" },
+
+  // Living
+  { src: "photos/009.jpg", cat: "Living",    ar: 1.5,   caption: "Gas fireplace anchors a 19-foot living wall" },
+  { src: "photos/035.jpg", cat: "Living",    ar: 1.5,   caption: "Hand-carved mantel, original cherry millwork" },
+  { src: "photos/007.jpg", cat: "Living",    ar: 1.5,   caption: "Open-plan flow between dining and lounge" },
+  { src: "photos/010.jpg", cat: "Living",    ar: 1.5,   caption: "Light-flooded living from south-facing windows" },
+  { src: "photos/012.jpg", cat: "Living",    ar: 1.5,   caption: "Formal seating arrangement" },
+  { src: "photos/013.jpg", cat: "Living",    ar: 1.5,   caption: "Dining and lounge from the mezzanine" },
+  { src: "photos/015.jpg", cat: "Living",    ar: 0.667, caption: "Evening — fire lit, pendants on" },
+  { src: "photos/046.jpg", cat: "Living",    ar: 1.5,   caption: "Storage room and wine fridge" },
+  { src: "photos/052.jpg", cat: "Living",    ar: 1.5,   caption: "Full-size washer / dryer" },
+
+  // Kitchen
+  { src: "photos/017.jpg", cat: "Kitchen",   ar: 1.5,   caption: "Chef's kitchen with central gas-range island" },
+  { src: "photos/018.jpg", cat: "Kitchen",   ar: 1.5,   caption: "Cherry millwork and granite throughout" },
+  { src: "photos/019.jpg", cat: "Kitchen",   ar: 1.5,   caption: "Sub-Zero refrigeration, integrated appliances" },
+  { src: "photos/020.jpg", cat: "Kitchen",   ar: 1.5,   caption: "Bar seating for three" },
+  { src: "photos/024.jpg", cat: "Kitchen",   ar: 1.5,   caption: "Prep galley with travertine backsplash" },
+
+  // Den
+  { src: "photos/036.jpg", cat: "Den",       ar: 1.5,   caption: "Den / second living above the great room" },
+  { src: "photos/029.jpg", cat: "Den",       ar: 0.667, caption: "Mezzanine office with overlook" },
+
+  // Bedrooms
+  { src: "photos/040.jpg", cat: "Bedrooms",  ar: 1.5,   caption: "Primary bedroom" },
+  { src: "photos/042.jpg", cat: "Bedrooms",  ar: 1.5,   caption: "Primary bedroom — second view" },
+  { src: "photos/039.jpg", cat: "Bedrooms",  ar: 1.5,   caption: "Primary bedroom terrace" },
+  { src: "photos/048.jpg", cat: "Bedrooms",  ar: 1.5,   caption: "Second bedroom — restful palette, generous proportions" },
+
+  // Bath
+  { src: "photos/049.jpg", cat: "Bath",      ar: 1.5,   caption: "Primary bath — freestanding clawfoot tub" },
+  { src: "photos/050.jpg", cat: "Bath",      ar: 1.5,   caption: "Hand-held fixtures, marble tile" },
+  { src: "photos/051.jpg", cat: "Bath",      ar: 1.5,   caption: "Walk-in glass shower" },
+  { src: "photos/047.jpg", cat: "Bath",      ar: 1.5,   caption: "Half bath" },
+
+  // Garage — moved above Building/Amenities
+  { src: "photos/053.jpg", cat: "Garage",    ar: 1.5,   caption: "Private interior-access garage — the rare detail" },
+  { src: "photos/055.jpg", cat: "Garage",    ar: 1.5,   caption: "Step from the kitchen into your own bay" },
+  { src: "photos/057.jpg", cat: "Garage",    ar: 1.5,   caption: "Secure, dedicated, fully enclosed" },
+
+  // Building / Amenities
+  { src: "photos/002.jpg", cat: "Building/Amenities", ar: 0.667, caption: "The Grace Tower" },
+  { src: "photos/037.jpg", cat: "Building/Amenities", ar: 1.5,   caption: "Fitness centre" },
+  { src: "photos/061.jpg", cat: "Building/Amenities", ar: 1.778, caption: "Indoor / outdoor pool and hot tub" },
+  { src: "photos/058.jpg", cat: "Building/Amenities", ar: 1.5,   caption: "European-style residents' lounge" },
+  { src: "photos/059.jpg", cat: "Building/Amenities", ar: 1.5,   caption: "Gas fire table for evenings on the city" },
+  { src: "photos/060.jpg", cat: "Building/Amenities", ar: 1.5,   caption: "Landscaped terrace for gathering" },
 ];
 
 const RARITY = [
@@ -831,27 +848,72 @@ function GalleryTile({ photo, span, ratio, onClick }) {
   );
 }
 
-// Layout pattern: pleasant editorial rhythm. Returns {span, ratio} per index.
-function tileSpec(i, total) {
-  // 12-col grid. Mix: 12, 6+6, 4+4+4, 8+4, 4+8
-  const patterns = [
-    [{s:12, r:"16/7"}],
-    [{s:7, r:"4/3"}, {s:5, r:"4/3"}],
-    [{s:4, r:"3/4"}, {s:4, r:"3/4"}, {s:4, r:"3/4"}],
-    [{s:5, r:"4/3"}, {s:7, r:"4/3"}],
-    [{s:6, r:"3/2"}, {s:6, r:"3/2"}],
-    [{s:8, r:"16/9"}, {s:4, r:"3/4"}],
-    [{s:4, r:"3/4"}, {s:8, r:"16/9"}],
-  ];
-  // Build a flat sequence; cycle through patterns
-  const flat = [];
-  let p = 0;
-  while (flat.length < total) {
-    const pat = patterns[p % patterns.length];
-    for (const t of pat) { if (flat.length < total) flat.push(t); }
-    p++;
+// Row-by-row layout planner. Every emitted "row" sums to 12 columns and contains
+// tiles whose aspect-ratios produce nearly-equal pixel heights, so rows align
+// cleanly on wide view. Tile aspect-ratio always tracks the photo's native AR,
+// so the image fills the tile without object-fit cropping.
+//
+// Spans paired by AR group:
+//   • Hero               → [12]            (first photo of the set)
+//   • Wide ≥ 16:9        → [12]            (full-row feature for very wide)
+//   • Portrait + L       → [4P, 8L]        (4/0.667 ≈ 6col tall ; 8/1.5 ≈ 5.3col)
+//   • L + portrait       → [8L, 4P]        (mirror of above)
+//   • Three landscapes   → [4, 4, 4]       (every Nth landscape row, for variety)
+//   • Two landscapes     → [6, 6]          (default landscape pair)
+//   • Lone landscape     → [12]            (trailing item, no pair available)
+function layoutPhotos(photos) {
+  const ar = (p) => p && p.ar ? p.ar : 1.5;
+  const isLandscape = (a) => a >= 1.3 && a <= 1.85;
+  const isPortrait  = (a) => a < 0.9;
+  const isWideHero  = (a) => a > 1.85;
+
+  const out = [];
+  let i = 0;
+  let landscapeRowsSeen = 0;
+  while (i < photos.length) {
+    const p = photos[i];
+    const a = ar(p);
+    // (1) Hero on the very first tile
+    if (out.length === 0) { out.push({ s: 12, r: a }); i++; continue; }
+    // (2) Wide-than-16:9 photos get their own full row
+    if (isWideHero(a))    { out.push({ s: 12, r: a }); i++; continue; }
+    // (3) Portrait
+    if (isPortrait(a)) {
+      const next = photos[i + 1];
+      if (next && isLandscape(ar(next))) {
+        out.push({ s: 4, r: a });
+        out.push({ s: 8, r: ar(next) });
+        i += 2; continue;
+      }
+      out.push({ s: 12, r: a }); i++; continue;
+    }
+    // (4) Landscape — choose pattern based on lookahead
+    const next  = photos[i + 1];
+    const next2 = photos[i + 2];
+    // 4a) Landscape followed by portrait → 8L + 4P spread
+    if (next && isPortrait(ar(next))) {
+      out.push({ s: 8, r: a });
+      out.push({ s: 4, r: ar(next) });
+      i += 2; continue;
+    }
+    // 4b) Every 3rd landscape row — 4+4+4 triplet if 3 landscapes are queued
+    const tripletReady = next && next2 && isLandscape(ar(next)) && isLandscape(ar(next2));
+    if (tripletReady && landscapeRowsSeen % 3 === 2) {
+      out.push({ s: 4, r: a });
+      out.push({ s: 4, r: ar(next) });
+      out.push({ s: 4, r: ar(next2) });
+      i += 3; landscapeRowsSeen++; continue;
+    }
+    // 4c) Default 6+6 landscape pair
+    if (next && isLandscape(ar(next))) {
+      out.push({ s: 6, r: a });
+      out.push({ s: 6, r: ar(next) });
+      i += 2; landscapeRowsSeen++; continue;
+    }
+    // 4d) Lone trailing landscape — full row
+    out.push({ s: 12, r: a }); i++;
   }
-  return flat[i];
+  return out;
 }
 
 function Lightbox({ photos, index, onClose, onNav }) {
@@ -951,11 +1013,14 @@ function Gallery() {
         </div>
 
         <div className="gallery-grid">
-          {displayed.map((p, i) => {
-            const spec = tileSpec(i, displayed.length);
-            const originalIndex = photos.indexOf(p);
-            return <GalleryTile key={p.src + i} photo={p} span={spec.s} ratio={spec.r} onClick={() => setLbIndex(originalIndex)} />;
-          })}
+          {(() => {
+            const specs = layoutPhotos(displayed);
+            return displayed.map((p, i) => {
+              const spec = specs[i];
+              const originalIndex = photos.indexOf(p);
+              return <GalleryTile key={p.src + i} photo={p} span={spec.s} ratio={spec.r} onClick={() => setLbIndex(originalIndex)} />;
+            });
+          })()}
         </div>
 
         {visible.length > 12 && !showAll && (
