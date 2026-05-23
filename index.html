@@ -1397,9 +1397,29 @@ function HeroVideo() {
     && window.matchMedia
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   useEffectS(() => {
-    if (!ref.current) return;
-    const p = ref.current.play();
-    if (p && typeof p.catch === "function") p.catch(() => { /* iOS Low Power, etc. — poster carries it */ });
+    const v = ref.current;
+    if (!v) return;
+    let done = false;
+    const tryPlay = () => {
+      const p = v.play();
+      if (p && typeof p.catch === "function") {
+        p.then(() => { done = true; }) // iOS Low Power, etc. — poster carries it
+         .catch(() => { /* not ready / blocked; a later event will retry */ });
+      } else {
+        done = true;
+      }
+    };
+    // The first play() can fire before any media bytes have arrived (cold
+    // cache), which rejects and leaves the poster up until a refresh. Retry
+    // whenever the element gains data so it starts on first load, not reload.
+    const onReady = () => { if (!done) tryPlay(); };
+    v.addEventListener("loadeddata", onReady);
+    v.addEventListener("canplay", onReady);
+    tryPlay(); // warm cache: data may already be buffered
+    return () => {
+      v.removeEventListener("loadeddata", onReady);
+      v.removeEventListener("canplay", onReady);
+    };
   }, []);
   if (reduceMotion) return null;
   return (
@@ -1409,7 +1429,7 @@ function HeroVideo() {
       muted
       loop
       playsInline
-      preload="metadata"
+      preload="auto"
       poster="https://1260richards.com/videos/hero-poster.jpg"
       aria-hidden="true"
       style={{
