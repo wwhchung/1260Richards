@@ -2161,55 +2161,59 @@ function WalkScore() {
 }
 
 function SimpleMap() {
-  // Stylized, abstract "block plan" map. Streets named.
-  const ink = "rgba(26,23,20,.45)";
+  // Stylized but geographically accurate map. Property at upper-left of Yaletown grid;
+  // Pacific Blvd arcs in from east of Mainland and curves around the south, terminating
+  // Hamilton, Homer and Richards. False Creek wraps south and east of the grid.
   const street = "rgba(26,23,20,.18)";
   const label = "rgba(26,23,20,.55)";
   const accent = "var(--accent-deep)";
+  const water = "rgba(120,150,165,.18)";
+  const parkFill = "rgba(110,135,90,.35)";
   return (
     <div style={{ background: "var(--paper-2)", padding: 28, position: "relative" }}>
       <svg viewBox="0 0 500 360" style={{ width: "100%", height: "auto", display: "block" }}>
-        {/* False Creek water */}
-        <path d="M 0 300 L 0 360 L 500 360 L 500 280 Q 360 320 220 310 Q 80 305 0 300 Z" fill="rgba(120,150,165,.18)" />
-        <text x="380" y="345" fontFamily="var(--serif)" fontStyle="italic" fontSize="16" fill={label}>False Creek</text>
-        {/* Streets */}
-        {[60, 120, 180, 240, 300].map((y, i) => (
-          <line key={"h"+i} x1="0" y1={y} x2="500" y2={y} stroke={street} strokeWidth="1.2" />
-        ))}
-        {[80, 180, 280, 380].map((x, i) => (
-          <line key={"v"+i} x1={x} y1="0" x2={x} y2={i === 0 ? 360 : 300} stroke={street} strokeWidth="1.2" />
-        ))}
-        {/* Diagonal Pacific blvd */}
-        <line x1="0" y1="270" x2="500" y2="240" stroke={street} strokeWidth="1.5" />
+        {/* False Creek — wraps south and east of the Yaletown grid */}
+        <path d="M 500 160 Q 488 230 410 270 Q 230 305 0 290 L 0 360 L 500 360 Z" fill={water} />
+        <text x="280" y="345" fontFamily="var(--serif)" fontStyle="italic" fontSize="16" fill={label}>False Creek</text>
+        {/* E–W streets (Davie & Drake only; no street between them) */}
+        <line x1="0" y1="60" x2="500" y2="60" stroke={street} strokeWidth="1.2" />
+        <line x1="0" y1="170" x2="488" y2="170" stroke={street} strokeWidth="1.2" />
+        {/* N–S streets — Richards, Homer, Hamilton, Mainland — terminate at Pacific Blvd */}
+        <line x1="95" y1="0" x2="95" y2="268" stroke={street} strokeWidth="1.2" />
+        <line x1="185" y1="0" x2="185" y2="272" stroke={street} strokeWidth="1.2" />
+        <line x1="275" y1="0" x2="275" y2="266" stroke={street} strokeWidth="1.2" />
+        <line x1="365" y1="0" x2="365" y2="256" stroke={street} strokeWidth="1.2" />
+        {/* Pacific Blvd — enters from east of Mainland and curves around */}
+        <path d="M 500 130 Q 490 210 430 245 Q 240 290 0 260" stroke={street} strokeWidth="1.7" fill="none" />
         {/* Street labels */}
         <text x="20" y="55" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">DAVIE ST</text>
-        <text x="20" y="175" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">DRAKE ST</text>
-        <text x="85" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 85 240)">RICHARDS</text>
-        <text x="185" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 185 240)">HOMER</text>
-        <text x="285" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 285 240)">HAMILTON</text>
-        <text x="385" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 385 240)">MAINLAND</text>
-        {/* Parks */}
-        {/* Emery Barnes Park — one block north of property, between Davie and Helmcken, west of Richards */}
-        <rect x="10" y="15" width="65" height="32" fill="rgba(110,135,90,.35)" />
-        <text x="42" y="34" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>EMERY BARNES</text>
-        {/* David Lam Park — directly south of property, west of Richards extended, on the seawall */}
-        <rect x="5" y="274" width="72" height="24" fill="rgba(110,135,90,.35)" />
-        <text x="41" y="289" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>DAVID LAM PARK</text>
-        {/* George Wainborn Park — south of property, between Richards and Homer extended */}
-        <rect x="92" y="274" width="83" height="24" fill="rgba(110,135,90,.35)" />
-        <text x="133" y="289" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>WAINBORN PARK</text>
-        {/* The property — between Davie and Drake on Richards */}
-        <circle cx="80" cy="140" r="9" fill={accent} />
-        <circle cx="80" cy="140" r="22" fill="none" stroke={accent} strokeWidth="1" opacity=".4" />
-        <circle cx="80" cy="140" r="38" fill="none" stroke={accent} strokeWidth=".6" opacity=".25" />
-        <text x="100" y="138" fontFamily="var(--serif)" fontStyle="italic" fontSize="16" fill={accent}>1260 Richards</text>
-        <text x="100" y="154" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">YOU ARE HERE</text>
-        {/* Skytrain — Yaletown–Roundhouse Station at Davie & Mainland (NE of property) */}
-        <circle cx="378" cy="85" r="5" fill="var(--ink)" />
-        <text x="370" y="89" textAnchor="end" fontFamily="var(--sans)" fontSize="9" fill={label}>Yaletown–Roundhouse Stn.</text>
-        {/* Aquabus — Yaletown dock on the seawall at the foot of Davie */}
-        <circle cx="78" cy="318" r="4" fill="var(--ink)" />
-        <text x="88" y="322" fontFamily="var(--sans)" fontSize="9" fill={label}>Aquabus to Granville Island</text>
+        <text x="20" y="165" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">DRAKE ST</text>
+        <text x="100" y="245" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 100 245)">RICHARDS</text>
+        <text x="190" y="245" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 190 245)">HOMER</text>
+        <text x="280" y="235" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 280 235)">HAMILTON</text>
+        <text x="370" y="220" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 370 220)">MAINLAND</text>
+        <text x="408" y="262" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-30 408 262)">PACIFIC BLVD</text>
+        {/* Emery Barnes Park — one block north of property, between Davie & Helmcken, west of Richards */}
+        <rect x="10" y="10" width="78" height="34" fill={parkFill} />
+        <text x="49" y="31" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>EMERY BARNES PARK</text>
+        {/* David Lam Park — between Pacific and seawall, curving along the shoreline */}
+        <path d="M 3 262 Q 80 271 168 274 L 168 290 Q 85 292 3 287 Z" fill={parkFill} />
+        <text x="85" y="285" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>DAVID LAM PARK</text>
+        {/* George Wainborn Park — east of David Lam, also between Pacific and seawall */}
+        <path d="M 190 274 Q 240 271 295 267 L 297 283 Q 240 291 192 290 Z" fill={parkFill} />
+        <text x="244" y="284" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>WAINBORN PARK</text>
+        {/* The property — 1260 Richards, between Davie and Drake on Richards */}
+        <circle cx="95" cy="125" r="9" fill={accent} />
+        <circle cx="95" cy="125" r="22" fill="none" stroke={accent} strokeWidth="1" opacity=".4" />
+        <circle cx="95" cy="125" r="38" fill="none" stroke={accent} strokeWidth=".6" opacity=".25" />
+        <text x="115" y="123" fontFamily="var(--serif)" fontStyle="italic" fontSize="16" fill={accent}>1260 Richards</text>
+        <text x="115" y="139" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">YOU ARE HERE</text>
+        {/* Yaletown–Roundhouse SkyTrain — north side of Davie at Mainland */}
+        <circle cx="365" cy="48" r="5" fill="var(--ink)" />
+        <text x="358" y="52" textAnchor="end" fontFamily="var(--sans)" fontSize="9" fill={label}>Yaletown–Roundhouse Stn.</text>
+        {/* Aquabus dock — on the seawall between David Lam and George Wainborn parks */}
+        <circle cx="180" cy="305" r="4" fill="var(--ink)" />
+        <text x="188" y="309" fontFamily="var(--sans)" fontSize="9" fill={label}>Aquabus to Granville Island</text>
       </svg>
     </div>
   );
