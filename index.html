@@ -1083,6 +1083,8 @@ const AMENITIES = [
 ];
 
 const NEIGHBOURHOOD = [
+  { d: "0.2 km", p: "Emery Barnes Park" },
+  { d: "0.2 km", p: "David Lam Park" },
   { d: "0.2 km", p: "George Wainborn Park" },
   { d: "0.3 km", p: "False Creek Seawall" },
   { d: "0.4 km", p: "Provence Marinaside" },
@@ -2116,7 +2118,7 @@ function Neighbourhood() {
               The seawall, two blocks <em>down the hill.</em>
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--ink-2)", marginTop: 24, maxWidth: 540 }}>
-              1260 Richards sits between Davie and Drake, a quiet stretch of converted warehouses and tree-lined block faces. The seawall, George Wainborn Park and the Roundhouse SkyTrain are all under five minutes on foot. Provence, Blue Water, Homer Street Café and the marinaside restaurants are even closer.
+              1260 Richards sits between Davie and Drake, a quiet stretch of converted warehouses and tree-lined block faces. The seawall, David Lam Park, George Wainborn Park and the Roundhouse SkyTrain are all under five minutes on foot. Emery Barnes Park is just one block north, and Provence, Blue Water, Homer Street Café and the marinaside restaurants are closer still.
             </p>
             <div className="mt-8">
               <WalkScore />
@@ -2186,21 +2188,28 @@ function SimpleMap() {
         <text x="185" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 185 240)">HOMER</text>
         <text x="285" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 285 240)">HAMILTON</text>
         <text x="385" y="240" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2" transform="rotate(-90 385 240)">MAINLAND</text>
-        {/* Park */}
-        <rect x="20" y="305" width="60" height="30" fill="rgba(110,135,90,.35)" />
-        <text x="50" y="324" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>WAINBORN PARK</text>
+        {/* Parks */}
+        {/* Emery Barnes Park — one block north of property, between Davie and Helmcken, west of Richards */}
+        <rect x="10" y="15" width="65" height="32" fill="rgba(110,135,90,.35)" />
+        <text x="42" y="34" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>EMERY BARNES</text>
+        {/* David Lam Park — directly south of property, west of Richards extended, on the seawall */}
+        <rect x="5" y="274" width="72" height="24" fill="rgba(110,135,90,.35)" />
+        <text x="41" y="289" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>DAVID LAM PARK</text>
+        {/* George Wainborn Park — south of property, between Richards and Homer extended */}
+        <rect x="92" y="274" width="83" height="24" fill="rgba(110,135,90,.35)" />
+        <text x="133" y="289" textAnchor="middle" fontFamily="var(--sans)" fontSize="7" fill={label}>WAINBORN PARK</text>
         {/* The property — between Davie and Drake on Richards */}
         <circle cx="80" cy="140" r="9" fill={accent} />
         <circle cx="80" cy="140" r="22" fill="none" stroke={accent} strokeWidth="1" opacity=".4" />
         <circle cx="80" cy="140" r="38" fill="none" stroke={accent} strokeWidth=".6" opacity=".25" />
         <text x="100" y="138" fontFamily="var(--serif)" fontStyle="italic" fontSize="16" fill={accent}>1260 Richards</text>
         <text x="100" y="154" fontFamily="var(--sans)" fontSize="9" fill={label} letterSpacing="2">YOU ARE HERE</text>
-        {/* Skytrain */}
-        <circle cx="250" cy="260" r="5" fill="var(--ink)" />
-        <text x="262" y="264" fontFamily="var(--sans)" fontSize="9" fill={label}>Yaletown–Roundhouse Stn.</text>
-        {/* Aquabus */}
-        <circle cx="140" cy="320" r="4" fill="var(--ink)" />
-        <text x="150" y="324" fontFamily="var(--sans)" fontSize="9" fill={label}>Aquabus to Granville Island</text>
+        {/* Skytrain — Yaletown–Roundhouse Station at Davie & Mainland (NE of property) */}
+        <circle cx="378" cy="85" r="5" fill="var(--ink)" />
+        <text x="370" y="89" textAnchor="end" fontFamily="var(--sans)" fontSize="9" fill={label}>Yaletown–Roundhouse Stn.</text>
+        {/* Aquabus — Yaletown dock on the seawall at the foot of Davie */}
+        <circle cx="78" cy="318" r="4" fill="var(--ink)" />
+        <text x="88" y="322" fontFamily="var(--sans)" fontSize="9" fill={label}>Aquabus to Granville Island</text>
       </svg>
     </div>
   );
